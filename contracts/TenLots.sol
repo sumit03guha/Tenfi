@@ -1,18 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "./ITenFarm.sol";
 import "./IPancakePair.sol";
 
-contract TenLots is Ownable, ReentrancyGuard {
-    using SafeMath for uint256;
-    using SafeERC20 for IERC20;
-    using Address for address;
+contract TenLots is
+    Initializable,
+    OwnableUpgradeable,
+    ReentrancyGuardUpgradeable
+{
+    using SafeMathUpgradeable for uint256;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
+    using AddressUpgradeable for address;
 
     struct UserInfo {
         uint256 balance;
@@ -41,24 +46,17 @@ contract TenLots is Ownable, ReentrancyGuard {
 
     VestingPeriods[] public vestingPeriods;
 
-    // 14
     uint8 singleStakingVault;
-    // 43200
     uint256 coolDownPeriod;
     uint256[] public pID;
     uint256 public totalStaked;
     uint256 public totalPenalties;
-    // 1e40
     uint256 precisionMultiplier;
 
     address public _supplier;
-    // 0xd15C444F1199Ae72795eba15E8C1db44E47abF62
     address tenfi;
-    // 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56
     address BUSD;
-    // 0x264A1b3F6db28De4D3dD4eD23Ab31A468B0C1A96
     address tenFarm;
-    // 0x393c7C3EbCBFf2c1138D123df5827e215458F0c4
     address tenFinance;
     address[] public LP;
     address[] public registeredUsers;
@@ -82,7 +80,23 @@ contract TenLots is Ownable, ReentrancyGuard {
         _;
     }
 
-    // function initialize() {}
+    function initialize(
+        uint8 _singleStakingVault,
+        uint256 _coolDownPeriod,
+        uint256 _precisionMultiplier,
+        address _tenfi,
+        address _BUSD,
+        address _tenFarm,
+        address _tenFianance
+    ) external initializer {
+        singleStakingVault = _singleStakingVault;
+        coolDownPeriod = _coolDownPeriod;
+        precisionMultiplier = _precisionMultiplier;
+        tenfi = _tenfi;
+        BUSD = _BUSD;
+        tenFarm = _tenFarm;
+        tenFinance = _tenFianance;
+    }
 
     function enterStaking() external nonReentrant {
         require(!userEntered[msg.sender], "Error:One TenLot Per User");
@@ -175,9 +189,15 @@ contract TenLots is Ownable, ReentrancyGuard {
 
                 totalStaked -= enterStakingStats[msg.sender].balance;
 
-                IERC20(BUSD).safeTransfer(msg.sender, userActualShare);
-                IERC20(BUSD).safeTransfer(tenFinance, TenfinanceShare);
-                Address.sendValue(payable(owner()), msg.value);
+                IERC20Upgradeable(BUSD).safeTransfer(
+                    msg.sender,
+                    userActualShare
+                );
+                IERC20Upgradeable(BUSD).safeTransfer(
+                    tenFinance,
+                    TenfinanceShare
+                );
+                AddressUpgradeable.sendValue(payable(owner()), msg.value);
                 uint256 pos = index[msg.sender];
                 registeredUsers[pos] = registeredUsers[
                     registeredUsers.length - 1
@@ -198,7 +218,7 @@ contract TenLots is Ownable, ReentrancyGuard {
 
                 totalStaked -= enterStakingStats[msg.sender].balance;
 
-                IERC20(BUSD).safeTransfer(msg.sender, userReward);
+                IERC20Upgradeable(BUSD).safeTransfer(msg.sender, userReward);
                 uint256 pos = index[msg.sender];
                 registeredUsers[pos] = registeredUsers[
                     registeredUsers.length - 1
@@ -227,7 +247,11 @@ contract TenLots is Ownable, ReentrancyGuard {
 
     //  this function updates the rewardPerShare of the pool
     function updateAccPerShare(uint256 amount) external onlySupplier {
-        IERC20(BUSD).safeTransferFrom(msg.sender, address(this), amount);
+        IERC20Upgradeable(BUSD).safeTransferFrom(
+            msg.sender,
+            address(this),
+            amount
+        );
         for (uint8 i = 0; i < levels.length; ++i) {
             if (levels[i].userCount > 0) {
                 accRewardPerLot[i] += amount
@@ -358,7 +382,7 @@ contract TenLots is Ownable, ReentrancyGuard {
     function transferPenalty() external onlyOwner {
         uint256 fundsTransferred = totalPenalties;
         totalPenalties = 0;
-        IERC20(BUSD).safeTransfer(tenFinance, fundsTransferred);
+        IERC20Upgradeable(BUSD).safeTransfer(tenFinance, fundsTransferred);
     }
 
     function enterUserIntoStaking(

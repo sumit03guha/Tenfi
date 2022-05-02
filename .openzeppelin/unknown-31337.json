@@ -1,0 +1,408 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    "txHash": "0xf0a3b22f66dd291828673ffec82735cdc17ec43a4305a5bd61a4b560a43c3b7a"
+  },
+  "proxies": [
+    {
+      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      "txHash": "0x46daa2ecfb42433f2e303bd8e85c66d188edf621c1adb8f274aded1eeaaae77d",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "b3f2c85bf12755b820c455f689030282c90cae5f8dca45c1a70619eed3dff9ea": {
+      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "txHash": "0x0cd3ed2947cc10b831bac31c795cee2a298759c705661801ad8afd4b24c3136a",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:39"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:44"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:87"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:74"
+          },
+          {
+            "label": "levels",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_array(t_struct(Levels)1487_storage)dyn_storage",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:39"
+          },
+          {
+            "label": "vestingPeriods",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_array(t_struct(VestingPeriods)1498_storage)dyn_storage",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:47"
+          },
+          {
+            "label": "singleStakingVault",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_uint8",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:49"
+          },
+          {
+            "label": "coolDownPeriod",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_uint256",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:50"
+          },
+          {
+            "label": "pID",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_array(t_uint256)dyn_storage",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:51"
+          },
+          {
+            "label": "totalStaked",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_uint256",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:52"
+          },
+          {
+            "label": "totalPenalties",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_uint256",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:53"
+          },
+          {
+            "label": "precisionMultiplier",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_uint256",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:54"
+          },
+          {
+            "label": "_supplier",
+            "offset": 0,
+            "slot": "159",
+            "type": "t_address",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:56"
+          },
+          {
+            "label": "tenfi",
+            "offset": 0,
+            "slot": "160",
+            "type": "t_address",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:57"
+          },
+          {
+            "label": "BUSD",
+            "offset": 0,
+            "slot": "161",
+            "type": "t_address",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:58"
+          },
+          {
+            "label": "tenFarm",
+            "offset": 0,
+            "slot": "162",
+            "type": "t_address",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:59"
+          },
+          {
+            "label": "tenFinance",
+            "offset": 0,
+            "slot": "163",
+            "type": "t_address",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:60"
+          },
+          {
+            "label": "LP",
+            "offset": 0,
+            "slot": "164",
+            "type": "t_array(t_address)dyn_storage",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:61"
+          },
+          {
+            "label": "registeredUsers",
+            "offset": 0,
+            "slot": "165",
+            "type": "t_array(t_address)dyn_storage",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:62"
+          },
+          {
+            "label": "enterStakingStats",
+            "offset": 0,
+            "slot": "166",
+            "type": "t_mapping(t_address,t_struct(UserInfo)1476_storage)",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:64"
+          },
+          {
+            "label": "userEntered",
+            "offset": 0,
+            "slot": "167",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:65"
+          },
+          {
+            "label": "index",
+            "offset": 0,
+            "slot": "168",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:66"
+          },
+          {
+            "label": "accRewardPerLot",
+            "offset": 0,
+            "slot": "169",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:67"
+          },
+          {
+            "label": "userPenalty",
+            "offset": 0,
+            "slot": "170",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:68"
+          },
+          {
+            "label": "claimCoolDown",
+            "offset": 0,
+            "slot": "171",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TenLots",
+            "src": "contracts\\TenLots.sol:69"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(Levels)1487_storage)dyn_storage": {
+            "label": "struct TenLots.Levels[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(VestingPeriods)1498_storage)dyn_storage": {
+            "label": "struct TenLots.VestingPeriods[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(UserInfo)1476_storage)": {
+            "label": "mapping(address => struct TenLots.UserInfo)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Levels)1487_storage": {
+            "label": "struct TenLots.Levels",
+            "members": [
+              {
+                "label": "sharePercent",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "minBalance",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "maxBalance",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "userCount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "maxAllowedUser",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
+          },
+          "t_struct(UserInfo)1476_storage": {
+            "label": "struct TenLots.UserInfo",
+            "members": [
+              {
+                "label": "balance",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "timestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "level",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "claimTimeStamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "pendingFee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "rewardDebt",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "5"
+              }
+            ],
+            "numberOfBytes": "192"
+          },
+          "t_struct(VestingPeriods)1498_storage": {
+            "label": "struct TenLots.VestingPeriods",
+            "members": [
+              {
+                "label": "minVestingPeriod",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "maxVestingPeriod",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "percentReturn",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    }
+  }
+}
