@@ -86,6 +86,7 @@ contract TenLots is
         address _tenFarm,
         address _tenFianance
     ) external initializer {
+        __Ownable_init();
         singleStakingVault = _singleStakingVault;
         coolDownPeriod = _coolDownPeriod;
         precisionMultiplier = _precisionMultiplier;
@@ -286,7 +287,7 @@ contract TenLots is
         uint256 _maxBalance,
         uint256 _percentage,
         uint256 _maxAllowedUser
-    ) external {
+    ) external onlyOwner {
         levels.push(
             Levels({
                 sharePercent: _percentage,
@@ -379,7 +380,7 @@ contract TenLots is
         IERC20Upgradeable(BUSD).safeTransfer(tenFinance, fundsTransferred);
     }
 
-    function setAccRewardPerLot(uint256[] calldata values) external {
+    function setAccRewardPerLot(uint256[] calldata values) external onlyOwner {
         for (uint i = 0; i < levels.length; ++i) {
             accRewardPerLot[i] = values[i];
         }
@@ -388,7 +389,7 @@ contract TenLots is
     function enterUserIntoStaking(
         address[] calldata users,
         UserInfo[] calldata data
-    ) external {
+    ) external onlyOwner {
         for (uint256 i = 0; i < users.length; ++i) {
             enterStakingStats[users[i]] = data[i];
             totalStaked += data[i].balance;

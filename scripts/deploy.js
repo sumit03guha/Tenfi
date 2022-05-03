@@ -1,6 +1,9 @@
 const { ethers, upgrades } = require('hardhat');
+const fs = require('fs');
 
 const main = async () => {
+  await hre.run('compile');
+
   const singleStakingVault = 14;
   const coolDownPeriod = 43200;
   const precisionMultiplier = ethers.BigNumber.from('10').pow(40);
@@ -26,6 +29,19 @@ const main = async () => {
     }
   );
   await tenLots.deployed();
+
+  const address = tenLots.address;
+  const abi = JSON.parse(tenLots.interface.format('json'));
+
+  const output = {
+    address,
+    abi,
+  };
+
+  fs.writeFileSync('./build/deploy.json', JSON.stringify(output), (err) => {
+    if (err) console.error(err);
+  });
+
   console.log('TenLots deployed : ', tenLots.address);
 };
 

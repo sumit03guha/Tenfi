@@ -6,6 +6,7 @@ typechain
 package-lock.json
 data
 .openzeppelin
+build
 
 #Hardhat files
 cache
