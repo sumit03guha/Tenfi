@@ -73,10 +73,7 @@ contract TenLots is
     event rewardTransfered(address indexed user, uint256 indexed reward);
 
     modifier onlySupplier() {
-        require(
-            _supplier == _msgSender(),
-            "Ownable: caller is not the supplier"
-        );
+        require(_supplier == _msgSender(), "TenLots : caller != supplier");
         _;
     }
 
@@ -99,7 +96,7 @@ contract TenLots is
     }
 
     function enterStaking() external nonReentrant {
-        require(!userEntered[msg.sender], "Error:One TenLot Per User");
+        require(!userEntered[msg.sender], "TenLots : One TenLot per user");
         uint256 _balance = 0;
         for (uint8 i = 0; i < pID.length; ++i) {
             uint256 stakedWantTokens = TenFarm(tenFarm)
@@ -160,15 +157,15 @@ contract TenLots is
     }
 
     function claim() external payable {
-        require(userEntered[msg.sender], "Error: Enter staking first");
+        require(userEntered[msg.sender], "TenLots: Enter staking first");
         require(
             enterStakingStats[msg.sender].claimTimeStamp.add(600) >
                 block.timestamp,
-            "Error: Claim CoolDown Remaining"
+            "TenLots: Claim cooldown"
         );
         require(
             msg.value >= enterStakingStats[msg.sender].pendingFee,
-            "Error : Require Claim Fees"
+            "TenLots : claim fees"
         );
         uint256 vestedPeriod = block.timestamp.sub(
             enterStakingStats[msg.sender].timestamp
@@ -238,10 +235,7 @@ contract TenLots is
     }
 
     function changeSupplier(address supplier) external onlyOwner {
-        require(
-            supplier != address(0),
-            "Error : Supplier cannot be zero address"
-        );
+        require(supplier != address(0), "TenLots : zero address");
         _supplier = supplier;
     }
 
@@ -292,7 +286,7 @@ contract TenLots is
         uint256 _maxBalance,
         uint256 _percentage,
         uint256 _maxAllowedUser
-    ) external onlyOwner {
+    ) external {
         levels.push(
             Levels({
                 sharePercent: _percentage,
@@ -317,13 +311,13 @@ contract TenLots is
         levels[_level].minBalance = _minBalance;
     }
 
-    function addVault(uint256[] memory _pID, address[] memory lp)
+    function addVault(uint256[] calldata _pID, address[] calldata lp)
         external
         onlyOwner
     {
         for (uint8 i = 0; i < _pID.length; ++i) {
-            require(_pID.length == lp.length, "Error wrong Input");
-            require(lp[i] != address(0), "Error Enter a valid address");
+            require(_pID.length == lp.length, "TenLots : _pID != lp");
+            require(lp[i] != address(0), "TenLots : zero address lp");
             pID.push(_pID[i]);
             LP.push(lp[i]);
         }
@@ -334,10 +328,10 @@ contract TenLots is
         bool penalty,
         uint256 amount
     ) external onlyOwner {
-        require(userEntered[user], "Error: Enter staking first");
+        require(userEntered[user], "TenLots: staking !entered");
         require(
             block.timestamp.sub(claimCoolDown[user]) >= coolDownPeriod,
-            "Error: Claim once in 12hrs"
+            "TenLots: Claim cooldown"
         );
         if (!penalty) {
             enterStakingStats[user].claimTimeStamp = block.timestamp;
@@ -355,11 +349,11 @@ contract TenLots is
         }
     }
 
-    function removeLP(uint256[] memory _pID, address[] memory lp)
+    function removeLP(uint256[] calldata _pID, address[] calldata lp)
         external
         onlyOwner
     {
-        require(_pID.length == lp.length, "Error wrong Input");
+        require(_pID.length == lp.length, "TenLots : _pID != lp");
         uint256 temp1;
         address temp2;
         for (uint8 j = 0; j < _pID.length; ++j) {
@@ -385,17 +379,28 @@ contract TenLots is
         IERC20Upgradeable(BUSD).safeTransfer(tenFinance, fundsTransferred);
     }
 
+    function setAccRewardPerLot(uint256[] calldata values) external {
+        for (uint i = 0; i < levels.length; ++i) {
+            accRewardPerLot[i] = values[i];
+        }
+    }
+
     function enterUserIntoStaking(
-        address[] memory users,
-        UserInfo[] memory data
-    ) external onlyOwner {
+        address[] calldata users,
+        UserInfo[] calldata data
+    ) external {
         for (uint256 i = 0; i < users.length; ++i) {
             enterStakingStats[users[i]] = data[i];
+            totalStaked += data[i].balance;
+            levels[data[i].level].userCount++;
+            userEntered[users[i]] = true;
+            registeredUsers.push(users[i]);
+            index[users[i]] = registeredUsers.length - 1;
         }
     }
 
     function userRewardPerLot(address user) public view returns (uint256) {
-        require(userEntered[user], "Error: Enter Staking");
+        require(userEntered[user], "TenLots: staking !entered");
         uint256 _level = enterStakingStats[user].level;
         uint256 _rewardPerLot = accRewardPerLot[_level].mul(100).sub(
             enterStakingStats[user].rewardDebt

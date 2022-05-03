@@ -1,6 +1,6 @@
 const { ethers, upgrades } = require('hardhat');
 
-async function main() {
+const main = async () => {
   const singleStakingVault = 14;
   const coolDownPeriod = 43200;
   const precisionMultiplier = ethers.BigNumber.from('10').pow(40);
@@ -27,7 +27,7 @@ async function main() {
   );
   await tenLots.deployed();
   console.log('TenLots deployed : ', tenLots.address);
-}
+};
 
 main()
   .then(() => process.exit(0))

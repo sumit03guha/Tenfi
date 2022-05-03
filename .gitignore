@@ -10,3 +10,4 @@ data
 #Hardhat files
 cache
 artifacts
+remix-compiler.config.js
