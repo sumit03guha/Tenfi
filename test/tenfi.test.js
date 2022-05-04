@@ -43,7 +43,9 @@ describe('TenLots', () => {
     let userReward = [];
 
     before(async () => {
-      const web3 = new Web3('http://127.0.0.1:8545/');
+      const web3 = new Web3(
+        'https://speedy-nodes-nyc.moralis.io/f19381e84e5c8dde5935ae3e/bsc/mainnet/archive'
+      );
 
       contract = new web3.eth.Contract(
         abi,
@@ -125,28 +127,32 @@ describe('TenLots', () => {
     it('should enter into staking', async () => {
       console.log('data: ', data2[0]);
       console.log('address: ', addresses[0]);
-      const dummy = [data2[0]];
-      await tenLots.enterUserIntoStaking([addresses[0]], dummy);
 
-      // addresses.forEach(async (address, index) => {
-      //   await expect(tenLots.userRewardPerLot(address)).to.eq(
-      //     userReward[index]
-      //   );
-      // });
-      // console.log(await tenLots.userRewardPerLot(addresses[0]));
+      const len = data2.length;
+      let start = 0;
+      for (let index = 1; index <= Math.ceil(len / 100); index++) {
+        if (index <= Math.floor(len / 100)) {
+          await tenLots.enterUserIntoStaking(
+            addresses.slice(start, start + 100),
+            data2.slice(start, start + 100)
+          );
+          start += 100;
+        } else {
+          await tenLots.enterUserIntoStaking(
+            addresses.slice(start, len + 1),
+            data2.slice(start, len + 1)
+          );
+        }
+        console.log(`${index} done`);
+        console.log(`${start} done`);
+      }
+      console.log('done');
 
-      // console.log('userReward', userReward[0]);
-      // console.log(await tenLots.userRewardPerLot[addresses[0]]);
-      // console.log('res: ', res);
-
-      expect(await tenLots.userRewardPerLot(addresses[0])).to.eq(
-        await contract.methods.userRewardPerLot(addresses[0]).call()
-      );
-      console.log(1, await tenLots.userRewardPerLot(addresses[0]));
-      console.log(
-        2,
-        await contract.methods.userRewardPerLot(addresses[0]).call()
-      );
+      // expect(await tenLots.totalStaked()).to.eq(
+      //   await contract.methods.totalStaked.call()
+      // );
+      console.log(1, await tenLots.totalStaked());
+      console.log(2, await contract.methods.totalStaked().call());
     });
   });
 });
