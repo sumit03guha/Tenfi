@@ -66,7 +66,7 @@ contract TenLots is
     mapping(address => uint256) public index;
     mapping(uint256 => uint256) public accRewardPerLot;
     mapping(address => uint256) public userPenalty;
-    mapping(address => uint256) public claimCoolDown;
+    mapping(address => bool) public userAllowed;
 
     event stakingEntered(address indexed user, uint256 indexed timestamp);
     event rewardClaim(address indexed user, uint256 indexed reward);
@@ -158,12 +158,7 @@ contract TenLots is
     }
 
     function claim() external payable {
-        require(userEntered[msg.sender], "TenLots: Enter staking first");
-        require(
-            enterStakingStats[msg.sender].claimTimeStamp.add(600) >
-                block.timestamp,
-            "TenLots: Claim cooldown"
-        );
+        require(userAllowed[msg.sender], "TenLots : User not allowed");
         require(
             msg.value >= enterStakingStats[msg.sender].pendingFee,
             "TenLots : claim fees"
@@ -331,22 +326,25 @@ contract TenLots is
     ) external onlyOwner {
         require(userEntered[user], "TenLots: staking !entered");
         require(
-            block.timestamp.sub(claimCoolDown[user]) >= coolDownPeriod,
+            block.timestamp.sub(enterStakingStats[user].claimTimeStamp) >=
+                coolDownPeriod,
             "TenLots: Claim cooldown"
         );
         if (!penalty) {
             enterStakingStats[user].claimTimeStamp = block.timestamp;
             enterStakingStats[user].pendingFee += 716338000000000;
-            claimCoolDown[user] = block.timestamp;
+            userAllowed[user] = true;
         } else {
             totalPenalties += amount;
             userEntered[user] = false;
             levels[enterStakingStats[user].level].userCount--;
             totalStaked -= enterStakingStats[user].balance;
-            claimCoolDown[user] = block.timestamp;
-            enterStakingStats[user].rewardDebt = 0;
-            enterStakingStats[user].timestamp = 0;
-            enterStakingStats[user].balance = 0;
+            uint256 pos = index[msg.sender];
+            registeredUsers[pos] = registeredUsers[registeredUsers.length - 1];
+            registeredUsers.pop();
+
+            delete (index[msg.sender]);
+            delete (enterStakingStats[msg.sender]);
         }
     }
 
