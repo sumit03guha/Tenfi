@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "./ITenFarm.sol";
 import "./IPancakePair.sol";
+import "hardhat/console.sol";
 
 contract TenLots is
     Initializable,
@@ -166,6 +167,12 @@ contract TenLots is
         uint256 vestedPeriod = block.timestamp.sub(
             enterStakingStats[msg.sender].timestamp
         );
+        console.log("timestamp", block.timestamp);
+        console.log(
+            "enterStakingStats[msg.sender].timestamp",
+            enterStakingStats[msg.sender].timestamp
+        );
+        console.log("vested: ", vestedPeriod);
         for (uint8 i = 0; i < vestingPeriods.length; ++i) {
             if (
                 (vestedPeriod >= vestingPeriods[i].minVestingPeriod &&
