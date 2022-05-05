@@ -42,7 +42,9 @@ const main = async () => {
     if (err) console.error(err);
   });
 
-  console.log('TenLots deployed : ', tenLots.address);
+  console.log('TenLots proxy deployed : ', tenLots.address);
+  const addr = await upgrades.erc1967.getImplementationAddress(tenLots.address);
+  console.log('TenLots implementation : ', addr);
 };
 
 main()

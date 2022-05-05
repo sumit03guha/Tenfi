@@ -9,7 +9,6 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "./ITenFarm.sol";
 import "./IPancakePair.sol";
-import "hardhat/console.sol";
 
 contract TenLots is
     Initializable,
@@ -47,18 +46,18 @@ contract TenLots is
 
     VestingPeriods[] public vestingPeriods;
 
-    uint8 singleStakingVault;
-    uint256 coolDownPeriod;
+    uint8 public singleStakingVault;
+    uint256 public coolDownPeriod;
     uint256[] public pID;
     uint256 public totalStaked;
     uint256 public totalPenalties;
-    uint256 precisionMultiplier;
+    uint256 public precisionMultiplier;
 
     address public _supplier;
-    address tenfi;
-    address BUSD;
-    address tenFarm;
-    address tenFinance;
+    address public tenfi;
+    address public BUSD;
+    address public tenFarm;
+    address public tenFinance;
     address[] public LP;
     address[] public registeredUsers;
 
@@ -105,20 +104,16 @@ contract TenLots is
                 .stakedWantTokens(pID[i], msg.sender)
                 .mul(precisionMultiplier);
             address token0 = IPancakePair(LP[i]).token0();
-            address token1 = IPancakePair(LP[i]).token1(); ///
+            address token1 = IPancakePair(LP[i]).token1();
 
             if (token0 == tenfi) {
-                (uint256 reserve0, uint256 reserve1, uint256 _x) = IPancakePair(
-                    LP[i]
-                ).getReserves();
+                (uint256 reserve0, , ) = IPancakePair(LP[i]).getReserves();
                 uint256 totalSupply = IPancakePair(LP[i]).totalSupply();
                 _balance +=
                     (reserve0.mul(stakedWantTokens.div(totalSupply))) *
                     2;
             } else if (token1 == tenfi) {
-                (uint256 reserve0, uint256 reserve1, uint256 _x) = IPancakePair(
-                    LP[i]
-                ).getReserves();
+                (, uint256 reserve1, ) = IPancakePair(LP[i]).getReserves();
                 uint256 totalSupply = IPancakePair(LP[i]).totalSupply();
                 _balance +=
                     (reserve1.mul(stakedWantTokens.div(totalSupply))) *
@@ -167,12 +162,7 @@ contract TenLots is
         uint256 vestedPeriod = block.timestamp.sub(
             enterStakingStats[msg.sender].timestamp
         );
-        console.log("timestamp", block.timestamp);
-        console.log(
-            "enterStakingStats[msg.sender].timestamp",
-            enterStakingStats[msg.sender].timestamp
-        );
-        console.log("vested: ", vestedPeriod);
+
         for (uint8 i = 0; i < vestingPeriods.length; ++i) {
             if (
                 (vestedPeriod >= vestingPeriods[i].minVestingPeriod &&
@@ -242,7 +232,6 @@ contract TenLots is
         _supplier = supplier;
     }
 
-    //  this function updates the rewardPerShare of the pool
     function updateAccPerShare(uint256 amount) external onlySupplier {
         IERC20Upgradeable(BUSD).safeTransferFrom(
             msg.sender,
