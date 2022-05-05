@@ -84,7 +84,7 @@ contract TenLots is
         address _tenfi,
         address _BUSD,
         address _tenFarm,
-        address _tenFianance
+        address _tenFinance
     ) external initializer {
         __Ownable_init();
         singleStakingVault = _singleStakingVault;
@@ -93,7 +93,7 @@ contract TenLots is
         tenfi = _tenfi;
         BUSD = _BUSD;
         tenFarm = _tenFarm;
-        tenFinance = _tenFianance;
+        tenFinance = _tenFinance;
     }
 
     function enterStaking() external nonReentrant {

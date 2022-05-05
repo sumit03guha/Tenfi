@@ -9,17 +9,16 @@ const provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:8545/');
 
 describe('TenLots', () => {
   let TenLots, tenLots, BUSDt, busdt;
-
   let contract;
   let addresses = [];
   let data2 = [];
   let userReward = [];
   let owner, user1, user2, user3;
+
   const singleStakingVault = 14;
   const coolDownPeriod = 43200;
   const precisionMultiplier = ethers.BigNumber.from('10').pow(40);
   const tenfi = '0xd15C444F1199Ae72795eba15E8C1db44E47abF62';
-  let BUSD;
   const tenFarm = '0x264A1b3F6db28De4D3dD4eD23Ab31A468B0C1A96';
   const tenFinance = '0x393c7C3EbCBFf2c1138D123df5827e215458F0c4';
 
@@ -52,13 +51,14 @@ describe('TenLots', () => {
       tenLots = await TenLots.connect(owner).deploy();
       await tenLots.deployed();
     });
+
     it('should deploy', async () => {
       console.log('TenLots deployed : ', tenLots.address);
       expect(tenLots.address).to.not.be.undefined;
     });
   });
 
-  describe('Deploy proxy', async () => {
+  describe('Deploy proxy and end to end testing', async () => {
     before(async () => {
       const web3 = new Web3(
         'https://speedy-nodes-nyc.moralis.io/f19381e84e5c8dde5935ae3e/bsc/mainnet/archive'
@@ -193,6 +193,7 @@ describe('TenLots', () => {
         );
       }
     });
+
     it('should return true for users entered', async () => {
       for (let i = 0; i < addresses.length; i++) {
         const res = await tenLots.userEntered(addresses[i]);
@@ -270,6 +271,7 @@ describe('TenLots', () => {
       const res = await tenLots.userEntered(addresses[13]);
       expect(res).to.be.false;
     });
+
     it('should let the entered users to claim 50%', async () => {
       const testData = {
         balance: data2[14].balance,
@@ -321,6 +323,7 @@ describe('TenLots', () => {
       const res = await tenLots.userEntered(addresses[14]);
       expect(res).to.be.false;
     });
+
     it('should let the entered users to claim 75%', async () => {
       const testData = {
         balance: data2[15].balance,
@@ -372,6 +375,7 @@ describe('TenLots', () => {
       const res = await tenLots.userEntered(addresses[15]);
       expect(res).to.be.false;
     });
+
     it('should let the entered users to claim 100%', async () => {
       const testData = {
         balance: data2[16].balance,
@@ -421,6 +425,58 @@ describe('TenLots', () => {
       );
 
       const res = await tenLots.userEntered(addresses[16]);
+      expect(res).to.be.false;
+    });
+
+    it('should let the entered users to claim 100% when vestedperiod > maxvestingperiod', async () => {
+      const testData = {
+        balance: data2[17].balance,
+        timestamp: (Date.now() / 1000).toFixed(0),
+        level: data2[17].level,
+        claimTimeStamp: data2[17].claimTimeStamp,
+        pendingFee: data2[17].pendingFee,
+        rewardDebt: data2[17].rewardDebt,
+      };
+      await tenLots
+        .connect(owner)
+        .enterUserIntoStaking([addresses[17]], [testData]);
+      console.log('done');
+      let user;
+      await network.provider.request({
+        method: 'hardhat_impersonateAccount',
+        params: [addresses[17]],
+      });
+      user = await ethers.getSigner(addresses[17]);
+      await tenLots
+        .connect(owner)
+        .editUserClaimTimeStamp(addresses[17], false, 0);
+
+      await network.provider.send('evm_increaseTime', [41104000]);
+      await network.provider.send('evm_mine');
+
+      const obj = await tenLots.enterStakingStats(addresses[17]);
+      console.log(obj.pendingFee.toString());
+
+      await user1.sendTransaction({
+        to: addresses[17],
+        value: ethers.utils.parseEther('100.0'),
+      });
+
+      const bal = await provider.getBalance(addresses[17]);
+      const busdBal = await busdt.balanceOf(addresses[17]);
+      const userReward = await tenLots.userRewardPerLot(addresses[17]);
+      console.log(`userReward : ${ethers.utils.formatEther(userReward)}`);
+      console.log(`account balance: ${ethers.utils.formatEther(bal)} Eth`);
+      console.log(`BUSD balance: ${ethers.utils.formatEther(busdBal)} BUSD`);
+      await tenLots.connect(user).claim({
+        value: ethers.utils.parseUnits(obj.pendingFee.toString(), 'wei'),
+      });
+      const busdBal2 = await busdt.balanceOf(addresses[17]);
+      console.log(
+        `BUSD balance after: ${ethers.utils.formatEther(busdBal2)} BUSD`
+      );
+
+      const res = await tenLots.userEntered(addresses[17]);
       expect(res).to.be.false;
     });
   });
