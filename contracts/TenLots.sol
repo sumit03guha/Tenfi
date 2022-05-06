@@ -223,7 +223,7 @@ contract TenLots is
         }
     }
 
-    function editCoolDownPeriod(uint8 time) external onlyOwner {
+    function editCoolDownPeriod(uint256 time) external onlyOwner {
         coolDownPeriod = time;
     }
 
@@ -335,12 +335,12 @@ contract TenLots is
             userEntered[user] = false;
             levels[enterStakingStats[user].level].userCount--;
             totalStaked -= enterStakingStats[user].balance;
-            uint256 pos = index[msg.sender];
+            uint256 pos = index[user];
             registeredUsers[pos] = registeredUsers[registeredUsers.length - 1];
             registeredUsers.pop();
 
-            delete (index[msg.sender]);
-            delete (enterStakingStats[msg.sender]);
+            delete (index[user]);
+            delete (enterStakingStats[user]);
         }
     }
 

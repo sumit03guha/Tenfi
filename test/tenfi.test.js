@@ -73,7 +73,7 @@ describe('TenLots', () => {
       busdt = await BUSDt.connect(owner).deploy();
       await busdt.deployed();
 
-      BUSD_addr = busdt.address;
+      const BUSD_addr = busdt.address;
 
       TenLots = await hre.ethers.getContractFactory('TenLots');
       tenLots = await upgrades.deployProxy(
@@ -124,6 +124,8 @@ describe('TenLots', () => {
           300,
           200
         );
+
+      await tenLots.connect(owner).addVault([], []);
 
       await tenLots.connect(owner).addVestingPeriod(0, 7776000, 250);
       await tenLots.connect(owner).addVestingPeriod(7776000, 15552000, 500);
@@ -451,7 +453,7 @@ describe('TenLots', () => {
         .connect(owner)
         .editUserClaimTimeStamp(addresses[17], false, 0);
 
-      await network.provider.send('evm_increaseTime', [41104000]);
+      await network.provider.send('evm_increaseTime', [4110400000]);
       await network.provider.send('evm_mine');
 
       const obj = await tenLots.enterStakingStats(addresses[17]);
@@ -479,5 +481,97 @@ describe('TenLots', () => {
       const res = await tenLots.userEntered(addresses[17]);
       expect(res).to.be.false;
     });
+
+    it('should not allow to enter user into staking if user is not entered', async () => {
+      
+    })
+  });
+
+  describe('NEGATIVE ASSERTIONS', () => {
+    before(async () => {
+      const web3 = new Web3(
+        'https://speedy-nodes-nyc.moralis.io/f19381e84e5c8dde5935ae3e/bsc/mainnet/archive'
+      );
+
+      contract = new web3.eth.Contract(
+        abi,
+        '0x5123631036e563aEdfd9D9EfB35F2Ce25729783c'
+      );
+
+      BUSDt = await hre.ethers.getContractFactory('BUSDt');
+      busdt = await BUSDt.connect(owner).deploy();
+      await busdt.deployed();
+
+      const BUSD_addr = busdt.address;
+
+      TenLots = await hre.ethers.getContractFactory('TenLots');
+      tenLots = await upgrades.deployProxy(
+        TenLots,
+        [
+          singleStakingVault,
+          coolDownPeriod,
+          precisionMultiplier,
+          tenfi,
+          BUSD_addr,
+          tenFarm,
+          tenFinance,
+        ],
+        {
+          initializer: 'initialize',
+        }
+      );
+      await tenLots.deployed();
+
+      await busdt.transfer(
+        tenLots.address,
+        ethers.BigNumber.from('100000000000000000000000000')
+      );
+
+      await tenLots
+        .connect(owner)
+        .addLevel(
+          ethers.BigNumber.from('2500000000000000000000'),
+          ethers.BigNumber.from('50000000000000000000000'),
+          300,
+          30000
+        );
+      await tenLots
+        .connect(owner)
+        .addLevel(
+          ethers.BigNumber.from('50000000000000000000000'),
+          ethers.BigNumber.from('250000000000000000000000'),
+          400,
+          1500
+        );
+      await tenLots
+        .connect(owner)
+        .addLevel(
+          ethers.BigNumber.from('250000000000000000000000'),
+          ethers.BigNumber.from(
+            '10000000000000000000000000000000000000000000000000000000000000000'
+          ),
+          300,
+          200
+        );
+
+      // await tenLots.connect(owner).addVault([], []);
+
+      await tenLots.connect(owner).addVestingPeriod(0, 7776000, 250);
+      await tenLots.connect(owner).addVestingPeriod(7776000, 15552000, 500);
+      await tenLots.connect(owner).addVestingPeriod(15552000, 31104000, 750);
+      await tenLots.connect(owner).addVestingPeriod(31104000, 62208000, 1000);
+
+      await tenLots
+        .connect(owner)
+        .setAccRewardPerLot([
+          '19146046309380222227',
+          '81206084128536710372',
+          '137000462220996996429',
+        ]);
+
+      await tenLots.connect(owner).editCoolDownPeriod(5);
+    });
+
+
   });
 });
