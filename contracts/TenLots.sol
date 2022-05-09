@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "./ITToken.sol";
 import "./ITenFarm.sol";
 import "./IPancakePair.sol";
 
@@ -55,8 +56,11 @@ contract TenLots is
     uint256 public totalPenalties;
     uint256 public precisionMultiplier;
 
+    bool public tTokenSet;
+
     address public _supplier;
     address public tenfi;
+    address public TToken;
     address public BUSD;
     address public tenFarm;
     address public tenFinance;
@@ -70,9 +74,9 @@ contract TenLots is
     mapping(address => uint256) public userPenalty;
     mapping(address => bool) public userAllowed;
 
-    event stakingEntered(address indexed user, uint256 indexed timestamp);
-    event rewardClaim(address indexed user, uint256 indexed reward);
-    event rewardTransfered(address indexed user, uint256 indexed reward);
+    event StakingEntered(address indexed user, uint256 indexed timestamp);
+    event RewardClaim(address indexed user, uint256 indexed reward);
+    event RewardTransfered(address indexed user, uint256 indexed reward);
 
     modifier onlySupplier() {
         require(_supplier == _msgSender(), "TenLots : caller != supplier");
@@ -128,6 +132,12 @@ contract TenLots is
             .stakedWantTokens(singleStakingVault, msg.sender)
             .mul(precisionMultiplier);
 
+        if (tTokenSet) {
+            _balance += ITToken(TToken).balanceOfUnderlying(msg.sender).mul(
+                precisionMultiplier
+            );
+        }
+
         for (uint8 i = 0; i < levels.length; ++i) {
             require(
                 levels[i].userCount <= levels[i].maxAllowedUser,
@@ -153,7 +163,7 @@ contract TenLots is
                 break;
             }
         }
-        emit stakingEntered(msg.sender, block.timestamp);
+        emit StakingEntered(msg.sender, block.timestamp);
     }
 
     function claim() external payable whenNotPaused {
@@ -199,7 +209,7 @@ contract TenLots is
                 delete (index[msg.sender]);
                 delete (enterStakingStats[msg.sender]);
 
-                emit rewardClaim(msg.sender, userActualShare);
+                emit RewardClaim(msg.sender, userActualShare);
                 break;
             } else if (
                 vestedPeriod >
@@ -220,7 +230,7 @@ contract TenLots is
                 delete (index[msg.sender]);
                 delete (enterStakingStats[msg.sender]);
 
-                emit rewardClaim(msg.sender, userReward);
+                emit RewardClaim(msg.sender, userReward);
                 break;
             }
         }
@@ -397,12 +407,19 @@ contract TenLots is
         }
     }
 
+    function setTToken(address _TToken) external onlyOwner {
+        require(_TToken != address(0), "TenLots : zero address");
+        TToken = _TToken;
+        tTokenSet = true;
+    }
+
     function userRewardPerLot(address user) public view returns (uint256) {
         require(userEntered[user], "TenLots: staking !entered");
         uint256 _level = enterStakingStats[user].level;
         uint256 _rewardPerLot = accRewardPerLot[_level].mul(100).sub(
             enterStakingStats[user].rewardDebt
         );
+
         return _rewardPerLot.div(100);
     }
 }
