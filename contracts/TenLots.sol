@@ -86,7 +86,14 @@ contract TenLots is
     /**
      * @notice Function to initialize the TenLots contract via hardhat proxy plugin script.
      * @dev It sets the owner to the deployer of the proxy contract.
-     * @dev It sets the
+     * @dev It sets the pausable state to false.
+     * @param _singleStakingVault The pid of the vault to be used for staking.
+     * @param _coolDownPeriod The cool down period withdrawing from the farm.
+     * @param _precisionMultiplier The precision multiplier for certain calculations (1e40).
+     * @param _tenfi The address of the TenFi token.
+     * @param _BUSD The address of the BUSD token.
+     * @param _tenFarm The address of the TenFarm contract.
+     * @param _tenFinance The address of the TenFinance contract.
      */
     function initialize(
         uint8 _singleStakingVault,
@@ -108,6 +115,11 @@ contract TenLots is
         tenFinance = _tenFinance;
     }
 
+    /**
+     * @notice Function to let the eligible user to enter into staking.
+     * @dev It checks for the staked balance in the respective vaults
+     * and also the supplied balance in the lending platform.
+     */
     function enterStaking() external whenNotPaused nonReentrant {
         require(!userEntered[msg.sender], "TenLots : One TenLot per user");
         uint256 _balance = 0;
@@ -171,6 +183,9 @@ contract TenLots is
         emit StakingEntered(msg.sender, block.timestamp);
     }
 
+    /**
+     * @notice Function to claim the user's rewards based on the vesting period.
+     */
     function claim() external payable whenNotPaused {
         require(userAllowed[msg.sender], "TenLots : User not allowed");
         require(
@@ -241,15 +256,25 @@ contract TenLots is
         }
     }
 
+    /**
+     * @notice Function to edit the cool down period.
+     */
     function editCoolDownPeriod(uint256 time) external onlyOwner {
         coolDownPeriod = time;
     }
 
+    /**
+     * @notice Function to the set/change the supplier of the BUSD token.
+     * @dev The address refers to the TransferReward contract.
+     */
     function changeSupplier(address supplier) external onlyOwner {
         require(supplier != address(0), "TenLots : zero address");
         _supplier = supplier;
     }
 
+    /**
+     * @notice Function to update the accumulated reward per lot for the users.
+     */
     function updateAccPerShare(uint256 amount) external onlySupplier {
         IERC20Upgradeable(BUSD).safeTransferFrom(
             msg.sender,
@@ -266,6 +291,12 @@ contract TenLots is
         }
     }
 
+    /**
+     * @notice Function to add the details of each vesting period.
+     * @param _minVestingPeriod - The minimum vesting period.
+     * @param _maxVestingPeriod - The maximum vesting period.
+     * @param _percentReturn - The percentage of the reward to be returned to the user.
+     */
     function addVestingPeriod(
         uint256 _minVestingPeriod,
         uint256 _maxVestingPeriod,
@@ -280,17 +311,31 @@ contract TenLots is
         );
     }
 
+    /**
+     * @notice Function to edit the details of each vesting period.
+     * @param _index - The index of the vesting period in the vestingPeriods array.
+     * @param _minVestingPeriod - The minimum vesting period.
+     * @param _maxVestingPeriod - The maximum vesting period.
+     * @param _percentReturn - The percentage of the reward to be returned to the user.
+     */
     function editVestingPeriod(
-        uint256 pos,
+        uint256 _index,
         uint256 _minVestingPeriod,
         uint256 _maxVestingPeriod,
         uint256 _percentReturn
     ) external onlyOwner {
-        vestingPeriods[pos].minVestingPeriod = _minVestingPeriod;
-        vestingPeriods[pos].maxVestingPeriod = _maxVestingPeriod;
-        vestingPeriods[pos].percentReturn = _percentReturn;
+        vestingPeriods[_index].minVestingPeriod = _minVestingPeriod;
+        vestingPeriods[_index].maxVestingPeriod = _maxVestingPeriod;
+        vestingPeriods[_index].percentReturn = _percentReturn;
     }
 
+    /**
+     * @notice Function to add the details of each TenLots level.
+     * @param _minBalance - The minimum balance required to enter the level.
+     * @param _maxBalance - The maximum balance required to enter the level.
+     * @param _percentage - The percentage of the reward to be returned to the user.
+     * @param _maxAllowedUser - The maximum number of users allowed to enter the level.
+     */
     function addLevel(
         uint256 _minBalance,
         uint256 _maxBalance,
@@ -308,19 +353,32 @@ contract TenLots is
         );
     }
 
+    /**
+     * @notice Function to edit the details of each TenLots level.
+     * @param _index - The index of the level in the levels array.
+     * @param _percentage - The percentage of the reward to be returned to the user.
+     * @param _maxAllowedUser - The maximum number of users allowed to enter the level.
+     * @param _maxBalance - The maximum balance required to enter the level.
+     * @param _minBalance - The minimum balance required to enter the level.
+     */
     function editLevel(
-        uint256 _level,
+        uint256 _index,
         uint256 _percentage,
         uint256 _maxAllowedUser,
         uint256 _maxBalance,
         uint256 _minBalance
     ) external onlyOwner {
-        levels[_level].sharePercent = _percentage;
-        levels[_level].maxAllowedUser = _maxAllowedUser;
-        levels[_level].maxBalance = _maxBalance;
-        levels[_level].minBalance = _minBalance;
+        levels[_index].sharePercent = _percentage;
+        levels[_index].maxAllowedUser = _maxAllowedUser;
+        levels[_index].maxBalance = _maxBalance;
+        levels[_index].minBalance = _minBalance;
     }
 
+    /**
+     * @notice Function to add the pool ids and the corresponding LP token addresses.
+     * @param _pID - The pool id array.
+     * @param lp - The LP token address array.
+     */
     function addVault(uint256[] calldata _pID, address[] calldata lp)
         external
         onlyOwner
@@ -333,6 +391,11 @@ contract TenLots is
         }
     }
 
+    /**
+     * @notice Function to edit the user's rewards claiming timestamp.
+     * @dev This function will automatically be trigerred, from the backend, whenever
+     * the user withdraws from the farm.
+     */
     function editUserClaimTimeStamp(
         address user,
         bool penalty,
@@ -362,6 +425,11 @@ contract TenLots is
         }
     }
 
+    /**
+     * @notice Function to remove the pool ids and the corresponding LP token addresses.
+     * @param _pID - The pool id array.
+     * @param lp - The LP token address array.
+     */
     function removeLP(uint256[] calldata _pID, address[] calldata lp)
         external
         onlyOwner
@@ -392,12 +460,19 @@ contract TenLots is
         IERC20Upgradeable(BUSD).safeTransfer(tenFinance, fundsTransferred);
     }
 
+    /**
+     * @notice Function to set the total reward amounts to be distributed for each lot.
+     */
     function setAccRewardPerLot(uint256[] calldata values) external onlyOwner {
         for (uint i = 0; i < levels.length; ++i) {
             accRewardPerLot[i] = values[i];
         }
     }
 
+    /**
+     * @notice Function to enter the user's details in the contract.
+     * @dev This function migrates the user's data from the old contract to the new contract.
+     */
     function enterUserIntoStaking(
         address[] calldata users,
         UserInfo[] calldata data
@@ -412,16 +487,28 @@ contract TenLots is
         }
     }
 
+    /**
+     * @notice Function to set the TToken address from the TenLend protocol.
+     * @dev This function also sets the tTokenSet to true, which enables the cTToken balance
+     * to be calculated for the user during the enterStaking function .
+     */
     function setTToken(address _TToken) external onlyOwner {
         require(_TToken != address(0), "TenLots : zero address");
         TToken = _TToken;
         tTokenSet = true;
     }
 
+    /**
+     * @notice Function to trigger the state of the tTokenSet.
+     * @dev This function should be used if wrong address is set for TToken.
+     */
     function toggleTTokenState(bool _state) external onlyOwner {
         tTokenSet = _state;
     }
 
+    /**
+     * @notice Function to calculate the reward of the user.
+     */
     function userRewardPerLot(address user) public view returns (uint256) {
         require(userEntered[user], "TenLots: staking !entered");
         uint256 _level = enterStakingStats[user].level;
