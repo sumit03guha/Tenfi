@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import "./ITToken.sol";
+import "./IcTToken.sol";
 import "./ITenFarm.sol";
 import "./IPancakePair.sol";
 
@@ -56,11 +56,11 @@ contract TenLots is
     uint256 public totalPenalties;
     uint256 public precisionMultiplier;
 
-    bool public tTokenSet;
+    bool public cTTokenSet;
 
     address public _supplier;
     address public tenfi;
-    address public TToken;
+    address public cTToken;
     address public BUSD;
     address public tenFarm;
     address public tenFinance;
@@ -149,8 +149,8 @@ contract TenLots is
             .stakedWantTokens(singleStakingVault, msg.sender)
             .mul(precisionMultiplier);
 
-        if (tTokenSet) {
-            _balance += ITToken(TToken).balanceOfUnderlying(msg.sender).mul(
+        if (cTTokenSet) {
+            _balance += IcTToken(cTToken).balanceOfUnderlying(msg.sender).mul(
                 precisionMultiplier
             );
         }
@@ -494,8 +494,8 @@ contract TenLots is
      */
     function setTToken(address _TToken) external onlyOwner {
         require(_TToken != address(0), "TenLots : zero address");
-        TToken = _TToken;
-        tTokenSet = true;
+        cTToken = _TToken;
+        cTTokenSet = true;
     }
 
     /**
@@ -503,7 +503,7 @@ contract TenLots is
      * @dev This function should be used if wrong address is set for TToken.
      */
     function toggleTTokenState(bool _state) external onlyOwner {
-        tTokenSet = _state;
+        cTTokenSet = _state;
     }
 
     /**
