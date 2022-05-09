@@ -158,7 +158,7 @@ contract TenLots is
                     level: i,
                     claimTimeStamp: 0,
                     pendingFee: 0,
-                    rewardDebt: accRewardPerLot[i].mul(precisionMultiplier)
+                    rewardDebt: accRewardPerLot[i]
                 });
                 totalStaked += _balance.div(precisionMultiplier);
                 levels[i].userCount++;
@@ -425,10 +425,10 @@ contract TenLots is
     function userRewardPerLot(address user) public view returns (uint256) {
         require(userEntered[user], "TenLots: staking !entered");
         uint256 _level = enterStakingStats[user].level;
-        uint256 _rewardPerLot = accRewardPerLot[_level].mul(100).sub(
-            enterStakingStats[user].rewardDebt
-        );
+        uint256 _rewardPerLot = accRewardPerLot[_level]
+            .mul(precisionMultiplier)
+            .sub((enterStakingStats[user].rewardDebt).mul(precisionMultiplier));
 
-        return _rewardPerLot.div(100);
+        return _rewardPerLot.div(precisionMultiplier);
     }
 }
