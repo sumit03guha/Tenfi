@@ -2,22 +2,24 @@ const Web3 = require('web3');
 const csv = require('csv-parser');
 const { createObjectCsvWriter } = require('csv-writer');
 const fs = require('fs');
-const abi = require('./old_contract_ABI');
 
+const abi = require('./old_contract_ABI');
 const web3 = new Web3(
   'https://speedy-nodes-nyc.moralis.io/f19381e84e5c8dde5935ae3e/bsc/mainnet/archive'
 );
 
 const csvWriter = createObjectCsvWriter({
-  path: './data/extracted.csv',
+  path: './data/extracted2.csv',
   header: [
     { id: 'address', title: 'Address' },
+    { id: 'balance', title: 'Balance' },
     { id: 'timestamp', title: 'TimeStamp' },
     { id: 'level', title: 'Level' },
     { id: 'rewardDebt', title: 'RewardDebt' },
     { id: 'userReward', title: 'userReward' },
   ],
 });
+
 const obj = {};
 let results = [];
 const contract = new web3.eth.Contract(
@@ -37,6 +39,7 @@ fs.createReadStream('./data/data.csv')
       try {
         blockchainCall = await contract.methods.userEntered(results[i]).call();
       } catch (error) {
+        console.log('error');
         await timer(5000);
       }
       if (blockchainCall && !obj[results[i]]) {
@@ -47,9 +50,11 @@ fs.createReadStream('./data/data.csv')
         const userReward = await contract.methods
           .userRewardPerLot(results[i])
           .call();
+        // console.log(`address:`+`${results[i]}`,`balance:`+`${data.balance}`)
         csvWriter.writeRecords([
           {
             address: `${results[i]}`,
+            balance: `${data.balance}`,
             timestamp: `${data.timestamp}`,
             level: `${data.level}`,
             rewardDebt: `${data.rewardDebt}`,

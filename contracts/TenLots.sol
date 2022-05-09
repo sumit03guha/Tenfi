@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "./ITenFarm.sol";
@@ -13,6 +14,7 @@ import "./IPancakePair.sol";
 contract TenLots is
     Initializable,
     OwnableUpgradeable,
+    PausableUpgradeable,
     ReentrancyGuardUpgradeable
 {
     using SafeMathUpgradeable for uint256;
@@ -87,6 +89,7 @@ contract TenLots is
         address _tenFinance
     ) external initializer {
         __Ownable_init();
+        __Pausable_init();
         singleStakingVault = _singleStakingVault;
         coolDownPeriod = _coolDownPeriod;
         precisionMultiplier = _precisionMultiplier;
@@ -96,7 +99,7 @@ contract TenLots is
         tenFinance = _tenFinance;
     }
 
-    function enterStaking() external nonReentrant {
+    function enterStaking() external whenNotPaused nonReentrant {
         require(!userEntered[msg.sender], "TenLots : One TenLot per user");
         uint256 _balance = 0;
         for (uint8 i = 0; i < pID.length; ++i) {
@@ -153,7 +156,7 @@ contract TenLots is
         emit stakingEntered(msg.sender, block.timestamp);
     }
 
-    function claim() external payable {
+    function claim() external payable whenNotPaused {
         require(userAllowed[msg.sender], "TenLots : User not allowed");
         require(
             msg.value >= enterStakingStats[msg.sender].pendingFee,

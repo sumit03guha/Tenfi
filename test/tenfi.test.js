@@ -29,7 +29,7 @@ describe('TenLots', () => {
     user2 = accounts[2];
     user3 = accounts[2];
 
-    fs.createReadStream('./data/newextracted.csv')
+    fs.createReadStream('./data/extracted2.csv')
       .pipe(csv())
       .on('data', (data) => {
         userReward.push(data.userReward);
@@ -125,7 +125,15 @@ describe('TenLots', () => {
           200
         );
 
-      await tenLots.connect(owner).addVault([], []);
+      await tenLots
+        .connect(owner)
+        .addVault(
+          [61, 95],
+          [
+            '0xf9FAdb9222848Cde36c0C06cF88776DC41937083',
+            '0x84123de7279Ee0F745631B8769993C6A61e29515',
+          ]
+        );
 
       await tenLots.connect(owner).addVestingPeriod(0, 7776000, 250);
       await tenLots.connect(owner).addVestingPeriod(7776000, 15552000, 500);
@@ -151,6 +159,7 @@ describe('TenLots', () => {
     it('should enter users into staking', async () => {
       const len = data2.length;
       let start = 0;
+      console.log('entering users into staking...');
       for (let index = 1; index <= Math.ceil(len / 100); index++) {
         if (index <= Math.floor(len / 100)) {
           await tenLots
@@ -169,21 +178,24 @@ describe('TenLots', () => {
             );
         }
       }
-
+      console.log('entered users into staking');
+      console.log('validating balance...');
       for (let i = 0; i < addresses.length; i++) {
-        console.log(
-          (await tenLots.enterStakingStats(addresses[i])).balance.toString(),
-          ' : ',
+        // console.log('index : ', i);
+        // expect(
+        //   (await tenLots.enterStakingStats(addresses[i])).balance.toString()
+        // ).to.equal(
+        //   (await contract.methods.enterStakingStats(addresses[i]).call())
+        //     .balance
+        // );
+        if (
+          (await tenLots.enterStakingStats(addresses[i])).balance.toString() !=
           (await contract.methods.enterStakingStats(addresses[i]).call())
             .balance
-        );
-        console.log('index : ', i);
-        expect(
-          (await tenLots.enterStakingStats(addresses[i])).balance.toString()
-        ).to.equal(
-          (await contract.methods.enterStakingStats(addresses[i]).call())
-            .balance
-        );
+        ) {
+          console.log('address : ', addresses[i]);
+          console.log('index : ', i);
+        }
       }
     });
 
@@ -481,10 +493,6 @@ describe('TenLots', () => {
       const res = await tenLots.userEntered(addresses[17]);
       expect(res).to.be.false;
     });
-
-    it('should not allow to enter user into staking if user is not entered', async () => {
-      
-    })
   });
 
   describe('NEGATIVE ASSERTIONS', () => {
@@ -554,7 +562,15 @@ describe('TenLots', () => {
           200
         );
 
-      // await tenLots.connect(owner).addVault([], []);
+      await tenLots
+        .connect(owner)
+        .addVault(
+          [61, 95],
+          [
+            '0xf9FAdb9222848Cde36c0C06cF88776DC41937083',
+            '0x84123de7279Ee0F745631B8769993C6A61e29515',
+          ]
+        );
 
       await tenLots.connect(owner).addVestingPeriod(0, 7776000, 250);
       await tenLots.connect(owner).addVestingPeriod(7776000, 15552000, 500);
@@ -572,6 +588,91 @@ describe('TenLots', () => {
       await tenLots.connect(owner).editCoolDownPeriod(5);
     });
 
+    it('should not allow to enter user to claim if msg.value < enterStakingStats[msg.sender].pendingFee', async () => {
+      const testData = {
+        balance: data2[18].balance,
+        timestamp: (Date.now() / 1000).toFixed(0),
+        level: data2[18].level,
+        claimTimeStamp: data2[18].claimTimeStamp,
+        pendingFee: data2[18].pendingFee,
+        rewardDebt: data2[18].rewardDebt,
+      };
+      await tenLots
+        .connect(owner)
+        .enterUserIntoStaking([addresses[18]], [testData]);
 
+      let user;
+      await network.provider.request({
+        method: 'hardhat_impersonateAccount',
+        params: [addresses[18]],
+      });
+      user = await ethers.getSigner(addresses[18]);
+      await tenLots
+        .connect(owner)
+        .editUserClaimTimeStamp(addresses[18], false, 0);
+
+      await network.provider.send('evm_increaseTime', [4110400000]);
+      await network.provider.send('evm_mine');
+
+      const obj = await tenLots.enterStakingStats(addresses[18]);
+
+      await user1.sendTransaction({
+        to: addresses[18],
+        value: ethers.utils.parseEther('100.0'),
+      });
+
+      await expect(
+        tenLots.connect(user).claim({
+          value: ethers.utils.parseUnits(
+            (obj.pendingFee.toNumber() - 1).toString(),
+            'wei'
+          ),
+        })
+      ).to.be.revertedWith('TenLots : claim fees');
+    });
+
+    it('should not allow to enter user to claim if user is not entered', async () => {
+      const testData = {
+        balance: data2[19].balance,
+        timestamp: (Date.now() / 1000).toFixed(0),
+        level: data2[19].level,
+        claimTimeStamp: data2[19].claimTimeStamp,
+        pendingFee: data2[19].pendingFee,
+        rewardDebt: data2[19].rewardDebt,
+      };
+      await tenLots
+        .connect(owner)
+        .enterUserIntoStaking([addresses[19]], [testData]);
+
+      await network.provider.send('evm_increaseTime', [4110400000]);
+      await network.provider.send('evm_mine');
+
+      const obj = await tenLots.enterStakingStats(addresses[19]);
+
+      await expect(
+        tenLots.connect(user3).claim({
+          value: ethers.utils.parseUnits(obj.pendingFee.toString(), 'wei'),
+        })
+      ).to.be.revertedWith('TenLots : User not allowed');
+    });
+
+    it('should not allow to enter user if user is entered', async () => {
+      let user;
+      await network.provider.request({
+        method: 'hardhat_impersonateAccount',
+        params: [addresses[20]],
+      });
+      user = await ethers.getSigner(addresses[20]);
+      await user1.sendTransaction({
+        to: addresses[20],
+        value: ethers.utils.parseEther('100.0'),
+      });
+      await tenLots
+        .connect(owner)
+        .enterUserIntoStaking([addresses[20]], [data2[20]]);
+      await expect(tenLots.connect(user).enterStaking()).to.be.revertedWith(
+        'TenLots : One TenLot per user'
+      );
+    });
   });
 });
