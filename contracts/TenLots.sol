@@ -83,6 +83,11 @@ contract TenLots is
         _;
     }
 
+    /**
+     * @notice Function to initialize the TenLots contract via hardhat proxy plugin script.
+     * @dev It sets the owner to the deployer of the proxy contract.
+     * @dev It sets the
+     */
     function initialize(
         uint8 _singleStakingVault,
         uint256 _coolDownPeriod,
@@ -411,6 +416,10 @@ contract TenLots is
         require(_TToken != address(0), "TenLots : zero address");
         TToken = _TToken;
         tTokenSet = true;
+    }
+
+    function toggleTTokenState(bool _state) external onlyOwner {
+        tTokenSet = _state;
     }
 
     function userRewardPerLot(address user) public view returns (uint256) {
