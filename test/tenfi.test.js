@@ -148,7 +148,7 @@ describe('TenLots', () => {
           '137000462220996996429',
         ]);
 
-      await tenLots.connect(owner).editCoolDownPeriod(5);
+      //     await tenLots.connect(owner).editCoolDownPeriod(5);
     });
 
     it('should deploy', async () => {
@@ -202,9 +202,9 @@ describe('TenLots', () => {
     it('validate user rewards', async () => {
       for (let i = 0; i < addresses.length; i++) {
         const res = await tenLots.userRewardPerLot(addresses[i]);
-        // expect(res.toString()).to.equal(
-        //   await contract.methods.userRewardPerLot(addresses[i]).call()
-        // );
+        expect(res.toString()).to.equal(
+          await contract.methods.userRewardPerLot(addresses[i]).call()
+        );
         console.log('RES..', res);
       }
     });
@@ -589,91 +589,96 @@ describe('TenLots', () => {
       await tenLots.connect(owner).editCoolDownPeriod(5);
     });
 
-    it('should not allow to enter user to claim if msg.value < enterStakingStats[msg.sender].pendingFee', async () => {
-      const testData = {
-        balance: data2[18].balance,
-        timestamp: (Date.now() / 1000).toFixed(0),
-        level: data2[18].level,
-        claimTimeStamp: data2[18].claimTimeStamp,
-        pendingFee: data2[18].pendingFee,
-        rewardDebt: data2[18].rewardDebt,
-      };
-      await tenLots
-        .connect(owner)
-        .enterUserIntoStaking([addresses[18]], [testData]);
+    // it('should not allow to enter user to claim if msg.value < enterStakingStats[msg.sender].pendingFee', async () => {
+    //   const testData = {
+    //     balance: data2[18].balance,
+    //     timestamp: (Date.now() / 1000).toFixed(0),
+    //     level: data2[18].level,
+    //     claimTimeStamp: data2[18].claimTimeStamp,
+    //     pendingFee: data2[18].pendingFee,
+    //     rewardDebt: data2[18].rewardDebt,
+    //   };
+    //   await tenLots
+    //     .connect(owner)
+    //     .enterUserIntoStaking([addresses[18]], [testData]);
 
-      let user;
-      await network.provider.request({
-        method: 'hardhat_impersonateAccount',
-        params: [addresses[18]],
-      });
-      user = await ethers.getSigner(addresses[18]);
-      await tenLots
-        .connect(owner)
-        .editUserClaimTimeStamp(addresses[18], false, 0);
+    //   let user;
+    //   await network.provider.request({
+    //     method: 'hardhat_impersonateAccount',
+    //     params: [addresses[18]],
+    //   });
+    //   user = await ethers.getSigner(addresses[18]);
+    //   await tenLots
+    //     .connect(owner)
+    //     .editUserClaimTimeStamp(addresses[18], false, 0);
 
-      await network.provider.send('evm_increaseTime', [4110400000]);
-      await network.provider.send('evm_mine');
+    //   await network.provider.send('evm_increaseTime', [4110400000]);
+    //   await network.provider.send('evm_mine');
 
-      const obj = await tenLots.enterStakingStats(addresses[18]);
+    //   const obj = await tenLots.enterStakingStats(addresses[18]);
 
-      await user1.sendTransaction({
-        to: addresses[18],
-        value: ethers.utils.parseEther('100.0'),
-      });
+    //   await user1.sendTransaction({
+    //     to: addresses[18],
+    //     value: ethers.utils.parseEther('100.0'),
+    //   });
 
-      await expect(
-        tenLots.connect(user).claim({
-          value: ethers.utils.parseUnits(
-            (obj.pendingFee.toNumber() - 1).toString(),
-            'wei'
-          ),
-        })
-      ).to.be.revertedWith('TenLots : claim fees');
-    });
+    //   await expect(
+    //     tenLots.connect(user).claim({
+    //       value: ethers.utils.parseUnits(
+    //         (obj.pendingFee.toNumber() - 1).toString(),
+    //         'wei'
+    //       ),
+    //     })
+    //   ).to.be.revertedWith('TenLots : claim fees');
+    // });
 
-    it('should not allow to enter user to claim if user is not entered', async () => {
-      const testData = {
-        balance: data2[19].balance,
-        timestamp: (Date.now() / 1000).toFixed(0),
-        level: data2[19].level,
-        claimTimeStamp: data2[19].claimTimeStamp,
-        pendingFee: data2[19].pendingFee,
-        rewardDebt: data2[19].rewardDebt,
-      };
-      await tenLots
-        .connect(owner)
-        .enterUserIntoStaking([addresses[19]], [testData]);
+    // it('should not allow to enter user to claim if user is not entered', async () => {
+    //   const testData = {
+    //     balance: data2[19].balance,
+    //     timestamp: (Date.now() / 1000).toFixed(0),
+    //     level: data2[19].level,
+    //     claimTimeStamp: data2[19].claimTimeStamp,
+    //     pendingFee: data2[19].pendingFee,
+    //     rewardDebt: data2[19].rewardDebt,
+    //   };
+    //   await tenLots
+    //     .connect(owner)
+    //     .enterUserIntoStaking([addresses[19]], [testData]);
 
-      await network.provider.send('evm_increaseTime', [4110400000]);
-      await network.provider.send('evm_mine');
+    //   await network.provider.send('evm_increaseTime', [4110400000]);
+    //   await network.provider.send('evm_mine');
 
-      const obj = await tenLots.enterStakingStats(addresses[19]);
+    //   const obj = await tenLots.enterStakingStats(addresses[19]);
 
-      await expect(
-        tenLots.connect(user3).claim({
-          value: ethers.utils.parseUnits(obj.pendingFee.toString(), 'wei'),
-        })
-      ).to.be.revertedWith('TenLots : User not allowed');
-    });
+    //   await expect(
+    //     tenLots.connect(user3).claim({
+    //       value: ethers.utils.parseUnits(obj.pendingFee.toString(), 'wei'),
+    //     })
+    //   ).to.be.revertedWith('TenLots : User not allowed');
+    // });
 
-    it('should not allow to enter user if user is entered', async () => {
-      let user;
-      await network.provider.request({
-        method: 'hardhat_impersonateAccount',
-        params: [addresses[20]],
-      });
-      user = await ethers.getSigner(addresses[20]);
-      await user1.sendTransaction({
-        to: addresses[20],
-        value: ethers.utils.parseEther('100.0'),
-      });
-      await tenLots
-        .connect(owner)
-        .enterUserIntoStaking([addresses[20]], [data2[20]]);
-      await expect(tenLots.connect(user).enterStaking()).to.be.revertedWith(
-        'TenLots : One TenLot per user'
-      );
+    // it('should not allow to enter user if user is entered', async () => {
+    //   let user;
+    //   await network.provider.request({
+    //     method: 'hardhat_impersonateAccount',
+    //     params: [addresses[20]],
+    //   });
+    //   user = await ethers.getSigner(addresses[20]);
+    //   await user1.sendTransaction({
+    //     to: addresses[20],
+    //     value: ethers.utils.parseEther('100.0'),
+    //   });
+    //   await tenLots
+    //     .connect(owner)
+    //     .enterUserIntoStaking([addresses[20]], [data2[20]]);
+    //   await expect(tenLots.connect(user).enterStaking()).to.be.revertedWith(
+    //     'TenLots : One TenLot per user'
+    //   );
+    // });
+
+    it('should not return reward if user !entered', async () => {
+      console.log(user3.address);
+      await expect(tenLots.userRewardPerLot(user3.address)).to.be.reverted;
     });
   });
 });

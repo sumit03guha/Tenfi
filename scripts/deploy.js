@@ -38,6 +38,10 @@ const main = async () => {
     abi,
   };
 
+  fs.mkdir('./build', { recursive: true }, (err) => {
+    if (err) console.error(err);
+  });
+
   fs.writeFileSync('./build/deploy.json', JSON.stringify(output), (err) => {
     if (err) console.error(err);
   });
