@@ -518,31 +518,32 @@ describe('TenLots', () => {
         value: ethers.utils.parseEther('100.0'),
       });
 
-      const lend = new ethers.Contract(
+      const tToken = new ethers.Contract(
         '0x7B205e1a4cBFb96Dda4f94013158C5500981f128',
         abi2,
         newUser
       );
 
       const tenfiContract = new ethers.Contract(tenfi, abi3, newUser);
-      try {
-        await tenfiContract
-          .connect(newUser)
-          .approve(lend.address, '30000000000000000000');
-      } catch (error) {
-        console.log('ERROR');
-      }
+      const amountToMint = ethers.utils.parseEther('30');
+
+      await tenfiContract
+        .connect(newUser)
+        .approve(tToken.address, amountToMint);
 
       const allowance = await tenfiContract.allowance(
         newUser.address,
-        '0x7B205e1a4cBFb96Dda4f94013158C5500981f128'
+        tToken.address
       );
       console.log('allowance: ', allowance);
-      await lend.connect(newUser).mint('30000000000000000000');
 
-      const balance = await lend.balanceOf(newUser.address);
+      expect(allowance).to.equal(amountToMint);
 
+      await tToken.connect(newUser).mint(amountToMint);
+
+      const balance = await tToken.balanceOf(newUser.address);
       console.log('BAL : ', balance);
+
       await tenLots.connect(newUser).enterStaking();
       const response = await tenLots.enterStakingStats(newUser.address);
       console.log('response: ', response);
