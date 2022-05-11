@@ -44,7 +44,7 @@ contract TenLots is
     struct VestingPeriods {
         uint256 minVestingPeriod;
         uint256 maxVestingPeriod;
-        uint256 percentReturn;
+        uint256 rewardAllocation;
     }
 
     VestingPeriods[] public vestingPeriods;
@@ -76,7 +76,6 @@ contract TenLots is
 
     event StakingEntered(address indexed user, uint256 indexed timestamp);
     event RewardClaim(address indexed user, uint256 indexed reward);
-    event RewardTransfered(address indexed user, uint256 indexed reward);
 
     modifier onlySupplier() {
         require(_supplier == _msgSender(), "TenLots : caller != supplier");
@@ -160,19 +159,20 @@ contract TenLots is
                 levels[i].userCount <= levels[i].maxAllowedUser,
                 "Error: maxAllowedUser limit reached"
             );
+            uint256 balance_ = _balance.div(precisionMultiplier);
             if (
-                _balance.div(precisionMultiplier) >= levels[i].minBalance &&
-                _balance.div(precisionMultiplier) < levels[i].maxBalance
+                balance_ >= levels[i].minBalance &&
+                balance_ < levels[i].maxBalance
             ) {
                 enterStakingStats[msg.sender] = UserInfo({
-                    balance: _balance.div(precisionMultiplier),
+                    balance: balance_,
                     timestamp: block.timestamp,
                     level: i,
                     claimTimeStamp: 0,
                     pendingFee: 0,
                     rewardDebt: accRewardPerLot[i]
                 });
-                totalStaked += _balance.div(precisionMultiplier);
+                totalStaked += balance_;
                 levels[i].userCount++;
                 userEntered[msg.sender] = true;
                 registeredUsers.push(msg.sender);
@@ -203,9 +203,9 @@ contract TenLots is
             ) {
                 uint256 userReward = userRewardPerLot(msg.sender);
                 uint256 userActualShare = userReward
-                    .mul(vestingPeriods[i].percentReturn)
+                    .mul(vestingPeriods[i].rewardAllocation)
                     .div(1000);
-                uint256 TenfinanceShare = userReward - userActualShare;
+                uint256 TenfinanceShare = userReward.sub(userActualShare);
 
                 levels[enterStakingStats[msg.sender].level].userCount--;
                 userEntered[msg.sender] = false;
@@ -295,18 +295,18 @@ contract TenLots is
      * @notice Function to add the details of each vesting period.
      * @param _minVestingPeriod - The minimum vesting period.
      * @param _maxVestingPeriod - The maximum vesting period.
-     * @param _percentReturn - The percentage of the reward to be returned to the user.
+     * @param _rewardAllocation - The percentage of the reward to be returned to the user.
      */
     function addVestingPeriod(
         uint256 _minVestingPeriod,
         uint256 _maxVestingPeriod,
-        uint256 _percentReturn
+        uint256 _rewardAllocation
     ) external onlyOwner {
         vestingPeriods.push(
             VestingPeriods({
                 minVestingPeriod: _minVestingPeriod,
                 maxVestingPeriod: _maxVestingPeriod,
-                percentReturn: _percentReturn
+                rewardAllocation: _rewardAllocation
             })
         );
     }
@@ -316,17 +316,17 @@ contract TenLots is
      * @param _index - The index of the vesting period in the vestingPeriods array.
      * @param _minVestingPeriod - The minimum vesting period.
      * @param _maxVestingPeriod - The maximum vesting period.
-     * @param _percentReturn - The percentage of the reward to be returned to the user.
+     * @param _rewardAllocation - The percentage of the reward to be returned to the user.
      */
     function editVestingPeriod(
         uint256 _index,
         uint256 _minVestingPeriod,
         uint256 _maxVestingPeriod,
-        uint256 _percentReturn
+        uint256 _rewardAllocation
     ) external onlyOwner {
         vestingPeriods[_index].minVestingPeriod = _minVestingPeriod;
         vestingPeriods[_index].maxVestingPeriod = _maxVestingPeriod;
-        vestingPeriods[_index].percentReturn = _percentReturn;
+        vestingPeriods[_index].rewardAllocation = _rewardAllocation;
     }
 
     /**
@@ -464,6 +464,8 @@ contract TenLots is
      * @notice Function to set the total reward amounts to be distributed for each lot.
      */
     function setAccRewardPerLot(uint256[] calldata values) external onlyOwner {
+        require(values.length == levels.length, "TenLots : values != levels");
+
         for (uint i = 0; i < levels.length; ++i) {
             accRewardPerLot[i] = values[i];
         }

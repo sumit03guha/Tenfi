@@ -49,6 +49,46 @@ const main = async () => {
   console.log('TenLots proxy deployed : ', tenLots.address);
   const addr = await upgrades.erc1967.getImplementationAddress(tenLots.address);
   console.log('TenLots implementation : ', addr);
+
+  await tenLots.addLevel(
+    ethers.BigNumber.from('5000000000000000000'),
+    ethers.BigNumber.from('10000000000000000000'),
+    300,
+    30000
+  );
+  await tenLots.addLevel(
+    ethers.BigNumber.from('10000000000000000000'),
+    ethers.BigNumber.from('15000000000000000000'),
+    400,
+    1500
+  );
+  await tenLots.addLevel(
+    ethers.BigNumber.from('15000000000000000000'),
+    ethers.BigNumber.from(
+      '10000000000000000000000000000000000000000000000000000000000000000'
+    ),
+    300,
+    200
+  );
+
+  console.log('TenLots levels added');
+
+  await tenLots.addVault(
+    [61, 95],
+    [
+      '0xf9FAdb9222848Cde36c0C06cF88776DC41937083',
+      '0x84123de7279Ee0F745631B8769993C6A61e29515',
+    ]
+  );
+
+  console.log('TenLots vaults added');
+
+  await tenLots.addVestingPeriod(0, 60, 250);
+  await tenLots.addVestingPeriod(60, 120, 500);
+  await tenLots.addVestingPeriod(120, 180, 750);
+  await tenLots.addVestingPeriod(180, 240, 1000);
+
+  console.log('TenLots vesting periods added');
 };
 
 main()

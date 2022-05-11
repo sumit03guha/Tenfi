@@ -4,6 +4,8 @@ const csv = require('csv-parser');
 const fs = require('fs');
 const Web3 = require('web3');
 const abi = require('../scripts/old_contract_ABI');
+const abi2 = require('../scripts/TERC20Delegator_ABI');
+const abi3 = require('../scripts/Tenfi_ABI');
 
 const provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:8545/');
 
@@ -21,6 +23,7 @@ describe('TenLots', () => {
   const tenfi = '0xd15C444F1199Ae72795eba15E8C1db44E47abF62';
   const tenFarm = '0x264A1b3F6db28De4D3dD4eD23Ab31A468B0C1A96';
   const tenFinance = '0x393c7C3EbCBFf2c1138D123df5827e215458F0c4';
+  const TToken = '0x7b205e1a4cbfb96dda4f94013158c5500981f128';
 
   before(async () => {
     const accounts = await ethers.getSigners();
@@ -101,23 +104,23 @@ describe('TenLots', () => {
       await tenLots
         .connect(owner)
         .addLevel(
-          ethers.BigNumber.from('2500000000000000000000'),
-          ethers.BigNumber.from('50000000000000000000000'),
+          ethers.BigNumber.from('5000000000000000000'),
+          ethers.BigNumber.from('10000000000000000000'),
           300,
           30000
         );
       await tenLots
         .connect(owner)
         .addLevel(
-          ethers.BigNumber.from('50000000000000000000000'),
-          ethers.BigNumber.from('250000000000000000000000'),
+          ethers.BigNumber.from('10000000000000000000'),
+          ethers.BigNumber.from('15000000000000000000'),
           400,
           1500
         );
       await tenLots
         .connect(owner)
         .addLevel(
-          ethers.BigNumber.from('250000000000000000000000'),
+          ethers.BigNumber.from('15000000000000000000'),
           ethers.BigNumber.from(
             '10000000000000000000000000000000000000000000000000000000000000000'
           ),
@@ -494,6 +497,56 @@ describe('TenLots', () => {
       const res = await tenLots.userEntered(addresses[17]);
       expect(res).to.be.false;
     });
+
+    it('should check TenLend market function', async () => {
+      await tenLots.connect(owner).setTToken(TToken);
+      expect(await tenLots.cTTokenSet()).to.be.true;
+    });
+
+    it('should check for the added cToken balanceOfUnderlying', async () => {
+      let newUser;
+      await network.provider.request({
+        method: 'hardhat_impersonateAccount',
+        params: ['0xaDC83042Db3a395E8e580A785eB0310B9aF9a6a3'],
+      });
+      newUser = await ethers.getSigner(
+        '0xaDC83042Db3a395E8e580A785eB0310B9aF9a6a3'
+      );
+
+      await user1.sendTransaction({
+        to: '0xaDC83042Db3a395E8e580A785eB0310B9aF9a6a3',
+        value: ethers.utils.parseEther('100.0'),
+      });
+
+      const lend = new ethers.Contract(
+        '0x7B205e1a4cBFb96Dda4f94013158C5500981f128',
+        abi2,
+        newUser
+      );
+
+      const tenfiContract = new ethers.Contract(tenfi, abi3, newUser);
+      try {
+        await tenfiContract
+          .connect(newUser)
+          .approve(lend.address, '30000000000000000000');
+      } catch (error) {
+        console.log('ERROR');
+      }
+
+      const allowance = await tenfiContract.allowance(
+        newUser.address,
+        '0x7B205e1a4cBFb96Dda4f94013158C5500981f128'
+      );
+      console.log('allowance: ', allowance);
+      await lend.connect(newUser).mint('30000000000000000000');
+
+      const balance = await lend.balanceOf(newUser.address);
+
+      console.log('BAL : ', balance);
+      await tenLots.connect(newUser).enterStaking();
+      const response = await tenLots.enterStakingStats(newUser.address);
+      console.log('response: ', response);
+    });
   });
 
   describe('NEGATIVE ASSERTIONS', () => {
@@ -589,92 +642,92 @@ describe('TenLots', () => {
       await tenLots.connect(owner).editCoolDownPeriod(5);
     });
 
-    // it('should not allow to enter user to claim if msg.value < enterStakingStats[msg.sender].pendingFee', async () => {
-    //   const testData = {
-    //     balance: data2[18].balance,
-    //     timestamp: (Date.now() / 1000).toFixed(0),
-    //     level: data2[18].level,
-    //     claimTimeStamp: data2[18].claimTimeStamp,
-    //     pendingFee: data2[18].pendingFee,
-    //     rewardDebt: data2[18].rewardDebt,
-    //   };
-    //   await tenLots
-    //     .connect(owner)
-    //     .enterUserIntoStaking([addresses[18]], [testData]);
+    it('should not allow to enter user to claim if msg.value < enterStakingStats[msg.sender].pendingFee', async () => {
+      const testData = {
+        balance: data2[18].balance,
+        timestamp: (Date.now() / 1000).toFixed(0),
+        level: data2[18].level,
+        claimTimeStamp: data2[18].claimTimeStamp,
+        pendingFee: data2[18].pendingFee,
+        rewardDebt: data2[18].rewardDebt,
+      };
+      await tenLots
+        .connect(owner)
+        .enterUserIntoStaking([addresses[18]], [testData]);
 
-    //   let user;
-    //   await network.provider.request({
-    //     method: 'hardhat_impersonateAccount',
-    //     params: [addresses[18]],
-    //   });
-    //   user = await ethers.getSigner(addresses[18]);
-    //   await tenLots
-    //     .connect(owner)
-    //     .editUserClaimTimeStamp(addresses[18], false, 0);
+      let user;
+      await network.provider.request({
+        method: 'hardhat_impersonateAccount',
+        params: [addresses[18]],
+      });
+      user = await ethers.getSigner(addresses[18]);
+      await tenLots
+        .connect(owner)
+        .editUserClaimTimeStamp(addresses[18], false, 0);
 
-    //   await network.provider.send('evm_increaseTime', [4110400000]);
-    //   await network.provider.send('evm_mine');
+      await network.provider.send('evm_increaseTime', [4110400000]);
+      await network.provider.send('evm_mine');
 
-    //   const obj = await tenLots.enterStakingStats(addresses[18]);
+      const obj = await tenLots.enterStakingStats(addresses[18]);
 
-    //   await user1.sendTransaction({
-    //     to: addresses[18],
-    //     value: ethers.utils.parseEther('100.0'),
-    //   });
+      await user1.sendTransaction({
+        to: addresses[18],
+        value: ethers.utils.parseEther('100.0'),
+      });
 
-    //   await expect(
-    //     tenLots.connect(user).claim({
-    //       value: ethers.utils.parseUnits(
-    //         (obj.pendingFee.toNumber() - 1).toString(),
-    //         'wei'
-    //       ),
-    //     })
-    //   ).to.be.revertedWith('TenLots : claim fees');
-    // });
+      await expect(
+        tenLots.connect(user).claim({
+          value: ethers.utils.parseUnits(
+            (obj.pendingFee.toNumber() - 1).toString(),
+            'wei'
+          ),
+        })
+      ).to.be.revertedWith('TenLots : claim fees');
+    });
 
-    // it('should not allow to enter user to claim if user is not entered', async () => {
-    //   const testData = {
-    //     balance: data2[19].balance,
-    //     timestamp: (Date.now() / 1000).toFixed(0),
-    //     level: data2[19].level,
-    //     claimTimeStamp: data2[19].claimTimeStamp,
-    //     pendingFee: data2[19].pendingFee,
-    //     rewardDebt: data2[19].rewardDebt,
-    //   };
-    //   await tenLots
-    //     .connect(owner)
-    //     .enterUserIntoStaking([addresses[19]], [testData]);
+    it('should not allow to enter user to claim if user is not entered', async () => {
+      const testData = {
+        balance: data2[19].balance,
+        timestamp: (Date.now() / 1000).toFixed(0),
+        level: data2[19].level,
+        claimTimeStamp: data2[19].claimTimeStamp,
+        pendingFee: data2[19].pendingFee,
+        rewardDebt: data2[19].rewardDebt,
+      };
+      await tenLots
+        .connect(owner)
+        .enterUserIntoStaking([addresses[19]], [testData]);
 
-    //   await network.provider.send('evm_increaseTime', [4110400000]);
-    //   await network.provider.send('evm_mine');
+      await network.provider.send('evm_increaseTime', [4110400000]);
+      await network.provider.send('evm_mine');
 
-    //   const obj = await tenLots.enterStakingStats(addresses[19]);
+      const obj = await tenLots.enterStakingStats(addresses[19]);
 
-    //   await expect(
-    //     tenLots.connect(user3).claim({
-    //       value: ethers.utils.parseUnits(obj.pendingFee.toString(), 'wei'),
-    //     })
-    //   ).to.be.revertedWith('TenLots : User not allowed');
-    // });
+      await expect(
+        tenLots.connect(user3).claim({
+          value: ethers.utils.parseUnits(obj.pendingFee.toString(), 'wei'),
+        })
+      ).to.be.revertedWith('TenLots : User not allowed');
+    });
 
-    // it('should not allow to enter user if user is entered', async () => {
-    //   let user;
-    //   await network.provider.request({
-    //     method: 'hardhat_impersonateAccount',
-    //     params: [addresses[20]],
-    //   });
-    //   user = await ethers.getSigner(addresses[20]);
-    //   await user1.sendTransaction({
-    //     to: addresses[20],
-    //     value: ethers.utils.parseEther('100.0'),
-    //   });
-    //   await tenLots
-    //     .connect(owner)
-    //     .enterUserIntoStaking([addresses[20]], [data2[20]]);
-    //   await expect(tenLots.connect(user).enterStaking()).to.be.revertedWith(
-    //     'TenLots : One TenLot per user'
-    //   );
-    // });
+    it('should not allow to enter user if user is entered', async () => {
+      let user;
+      await network.provider.request({
+        method: 'hardhat_impersonateAccount',
+        params: [addresses[20]],
+      });
+      user = await ethers.getSigner(addresses[20]);
+      await user1.sendTransaction({
+        to: addresses[20],
+        value: ethers.utils.parseEther('100.0'),
+      });
+      await tenLots
+        .connect(owner)
+        .enterUserIntoStaking([addresses[20]], [data2[20]]);
+      await expect(tenLots.connect(user).enterStaking()).to.be.revertedWith(
+        'TenLots : One TenLot per user'
+      );
+    });
 
     it('should not return reward if user !entered', async () => {
       console.log(user3.address);
