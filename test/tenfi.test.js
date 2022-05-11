@@ -514,7 +514,7 @@ describe('TenLots', () => {
       );
 
       await user1.sendTransaction({
-        to: '0xaDC83042Db3a395E8e580A785eB0310B9aF9a6a3',
+        to: newUser.address,
         value: ethers.utils.parseEther('100.0'),
       });
 
