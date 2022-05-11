@@ -121,38 +121,8 @@ contract TenLots is
      */
     function enterStaking() external whenNotPaused nonReentrant {
         require(!userEntered[msg.sender], "TenLots : One TenLot per user");
-        uint256 _balance = 0;
-        for (uint8 i = 0; i < pID.length; ++i) {
-            uint256 stakedWantTokens = TenFarm(tenFarm)
-                .stakedWantTokens(pID[i], msg.sender)
-                .mul(precisionMultiplier);
-            address token0 = IPancakePair(LP[i]).token0();
-            address token1 = IPancakePair(LP[i]).token1();
 
-            if (token0 == tenfi) {
-                (uint256 reserve0, , ) = IPancakePair(LP[i]).getReserves();
-                uint256 totalSupply = IPancakePair(LP[i]).totalSupply();
-                _balance +=
-                    (reserve0.mul(stakedWantTokens.div(totalSupply))) *
-                    2;
-            } else if (token1 == tenfi) {
-                (, uint256 reserve1, ) = IPancakePair(LP[i]).getReserves();
-                uint256 totalSupply = IPancakePair(LP[i]).totalSupply();
-                _balance +=
-                    (reserve1.mul(stakedWantTokens.div(totalSupply))) *
-                    2;
-            }
-        }
-
-        _balance += TenFarm(tenFarm)
-            .stakedWantTokens(singleStakingVault, msg.sender)
-            .mul(precisionMultiplier);
-
-        if (cTTokenSet) {
-            _balance += IcTToken(cTToken).balanceOfUnderlying(msg.sender).mul(
-                precisionMultiplier
-            );
-        }
+        uint256 _balance = getBalance(msg.sender);
 
         for (uint8 i = 0; i < levels.length; ++i) {
             require(
@@ -192,6 +162,7 @@ contract TenLots is
             msg.value >= enterStakingStats[msg.sender].pendingFee,
             "TenLots : claim fees"
         );
+
         uint256 vestedPeriod = block.timestamp.sub(
             enterStakingStats[msg.sender].timestamp
         );
@@ -506,6 +477,47 @@ contract TenLots is
      */
     function toggleTTokenState(bool _state) external onlyOwner {
         cTTokenSet = _state;
+    }
+
+    /**
+     * @notice Function to retrieve the Tenfi balance of the @param _user
+     */
+
+    function getBalance(address _user) public returns (uint256) {
+        uint256 _balance = 0;
+        for (uint8 i = 0; i < pID.length; ++i) {
+            uint256 stakedWantTokens = TenFarm(tenFarm)
+                .stakedWantTokens(pID[i], _user)
+                .mul(precisionMultiplier);
+            address token0 = IPancakePair(LP[i]).token0();
+            address token1 = IPancakePair(LP[i]).token1();
+
+            if (token0 == tenfi) {
+                (uint256 reserve0, , ) = IPancakePair(LP[i]).getReserves();
+                uint256 totalSupply = IPancakePair(LP[i]).totalSupply();
+                _balance +=
+                    (reserve0.mul(stakedWantTokens.div(totalSupply))) *
+                    2;
+            } else if (token1 == tenfi) {
+                (, uint256 reserve1, ) = IPancakePair(LP[i]).getReserves();
+                uint256 totalSupply = IPancakePair(LP[i]).totalSupply();
+                _balance +=
+                    (reserve1.mul(stakedWantTokens.div(totalSupply))) *
+                    2;
+            }
+        }
+
+        _balance += TenFarm(tenFarm)
+            .stakedWantTokens(singleStakingVault, _user)
+            .mul(precisionMultiplier);
+
+        if (cTTokenSet) {
+            _balance += IcTToken(cTToken).balanceOfUnderlying(_user).mul(
+                precisionMultiplier
+            );
+        }
+
+        return _balance;
     }
 
     /**
