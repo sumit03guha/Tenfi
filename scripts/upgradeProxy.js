@@ -14,9 +14,6 @@ const main = async () => {
 
 main()
   .then(async () => {
-    const addr = await upgrades.erc1967.getImplementationAddress(PROXY_ADDRESS);
-    console.log('TenLots implementation : ', addr);
-
     process.exit(0);
   })
   .catch((error) => {

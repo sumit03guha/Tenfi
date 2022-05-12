@@ -50,6 +50,7 @@ contract TenLots is
     VestingPeriods[] public vestingPeriods;
 
     uint8 public singleStakingVault;
+    uint8 public unitShare;
     uint256 public coolDownPeriod;
     uint256[] public pID;
     uint256 public totalStaked;
@@ -96,6 +97,7 @@ contract TenLots is
      */
     function initialize(
         uint8 _singleStakingVault,
+        uint8 _unitShare,
         uint256 _coolDownPeriod,
         uint256 _precisionMultiplier,
         address _tenfi,
@@ -106,6 +108,7 @@ contract TenLots is
         __Ownable_init();
         __Pausable_init();
         singleStakingVault = _singleStakingVault;
+        unitShare = _unitShare;
         coolDownPeriod = _coolDownPeriod;
         precisionMultiplier = _precisionMultiplier;
         tenfi = _tenfi;
@@ -140,7 +143,7 @@ contract TenLots is
                     level: i,
                     claimTimeStamp: 0,
                     pendingFee: 0,
-                    rewardDebt: accRewardPerLot[i]
+                    rewardDebt: accRewardPerLot[i].mul(unitShare)
                 });
                 totalStaked += balance_;
                 levels[i].userCount++;
@@ -156,7 +159,7 @@ contract TenLots is
     /**
      * @notice Function to claim the user's rewards based on the vesting period.
      */
-    function claim() external payable whenNotPaused {
+    function claim() external payable whenNotPaused nonReentrant {
         require(userAllowed[msg.sender], "TenLots : User not allowed");
         require(
             msg.value >= enterStakingStats[msg.sender].pendingFee,
@@ -183,6 +186,14 @@ contract TenLots is
 
                 totalStaked -= enterStakingStats[msg.sender].balance;
 
+                uint256 pos = index[msg.sender];
+                registeredUsers[pos] = registeredUsers[
+                    registeredUsers.length - 1
+                ];
+                registeredUsers.pop();
+                delete (index[msg.sender]);
+                delete (enterStakingStats[msg.sender]);
+
                 IERC20Upgradeable(BUSD).safeTransfer(
                     msg.sender,
                     userActualShare
@@ -192,13 +203,6 @@ contract TenLots is
                     TenfinanceShare
                 );
                 AddressUpgradeable.sendValue(payable(owner()), msg.value);
-                uint256 pos = index[msg.sender];
-                registeredUsers[pos] = registeredUsers[
-                    registeredUsers.length - 1
-                ];
-                registeredUsers.pop();
-                delete (index[msg.sender]);
-                delete (enterStakingStats[msg.sender]);
 
                 emit RewardClaim(msg.sender, userActualShare);
                 break;
@@ -212,7 +216,6 @@ contract TenLots is
 
                 totalStaked -= enterStakingStats[msg.sender].balance;
 
-                IERC20Upgradeable(BUSD).safeTransfer(msg.sender, userReward);
                 uint256 pos = index[msg.sender];
                 registeredUsers[pos] = registeredUsers[
                     registeredUsers.length - 1
@@ -220,6 +223,9 @@ contract TenLots is
                 registeredUsers.pop();
                 delete (index[msg.sender]);
                 delete (enterStakingStats[msg.sender]);
+
+                IERC20Upgradeable(BUSD).safeTransfer(msg.sender, userReward);
+                AddressUpgradeable.sendValue(payable(owner()), msg.value);
 
                 emit RewardClaim(msg.sender, userReward);
                 break;
@@ -434,7 +440,7 @@ contract TenLots is
     /**
      * @notice Function to set the total reward amounts to be distributed for each lot.
      */
-    function setAccRewardPerLot(uint256[] calldata values) external onlyOwner {
+    function setAccRewardPerLot(uint256[] memory values) external onlyOwner {
         require(values.length == levels.length, "TenLots : values != levels");
 
         for (uint i = 0; i < levels.length; ++i) {
@@ -533,11 +539,13 @@ contract TenLots is
      */
     function userRewardPerLot(address user) public view returns (uint256) {
         require(userEntered[user], "TenLots: staking !entered");
-        uint256 _level = enterStakingStats[user].level;
-        uint256 _rewardPerLot = accRewardPerLot[_level]
-            .mul(precisionMultiplier)
-            .sub((enterStakingStats[user].rewardDebt).mul(precisionMultiplier));
 
-        return _rewardPerLot.div(precisionMultiplier);
+        uint256 _level = enterStakingStats[user].level;
+
+        uint256 _rewardPerLot = accRewardPerLot[_level].mul(unitShare).sub(
+            (enterStakingStats[user].rewardDebt)
+        );
+
+        return _rewardPerLot.div(unitShare);
     }
 }

@@ -18,6 +18,7 @@ describe('TenLots', () => {
   let owner, user1, user2, user3;
 
   const singleStakingVault = 14;
+  const unitShare = 100;
   const coolDownPeriod = 43200;
   const precisionMultiplier = ethers.BigNumber.from('10').pow(40);
   const tenfi = '0xd15C444F1199Ae72795eba15E8C1db44E47abF62';
@@ -83,6 +84,7 @@ describe('TenLots', () => {
         TenLots,
         [
           singleStakingVault,
+          unitShare,
           coolDownPeriod,
           precisionMultiplier,
           tenfi,
@@ -101,57 +103,55 @@ describe('TenLots', () => {
         ethers.BigNumber.from('100000000000000000000000000')
       );
 
-      await tenLots
-        .connect(owner)
-        .addLevel(
-          ethers.BigNumber.from('5000000000000000000'),
-          ethers.BigNumber.from('10000000000000000000'),
-          300,
-          30000
-        );
-      await tenLots
-        .connect(owner)
-        .addLevel(
-          ethers.BigNumber.from('10000000000000000000'),
-          ethers.BigNumber.from('15000000000000000000'),
-          400,
-          1500
-        );
-      await tenLots
-        .connect(owner)
-        .addLevel(
-          ethers.BigNumber.from('15000000000000000000'),
-          ethers.BigNumber.from(
-            '10000000000000000000000000000000000000000000000000000000000000000'
-          ),
-          300,
-          200
-        );
+      await tenLots.addLevel(
+        ethers.BigNumber.from('5000000000000000000'),
+        ethers.BigNumber.from('10000000000000000000'),
+        300,
+        30000
+      );
+      await tenLots.addLevel(
+        ethers.BigNumber.from('10000000000000000000'),
+        ethers.BigNumber.from('15000000000000000000'),
+        400,
+        1500
+      );
+      await tenLots.addLevel(
+        ethers.BigNumber.from('15000000000000000000'),
+        ethers.BigNumber.from(
+          '10000000000000000000000000000000000000000000000000000000000000000'
+        ),
+        300,
+        200
+      );
 
-      await tenLots
-        .connect(owner)
-        .addVault(
-          [61, 95],
-          [
-            '0xf9FAdb9222848Cde36c0C06cF88776DC41937083',
-            '0x84123de7279Ee0F745631B8769993C6A61e29515',
-          ]
-        );
+      console.log('TenLots levels added');
 
-      await tenLots.connect(owner).addVestingPeriod(0, 7776000, 250);
-      await tenLots.connect(owner).addVestingPeriod(7776000, 15552000, 500);
-      await tenLots.connect(owner).addVestingPeriod(15552000, 31104000, 750);
-      await tenLots.connect(owner).addVestingPeriod(31104000, 62208000, 1000);
+      await tenLots.addVault(
+        [61, 95],
+        [
+          '0xf9FAdb9222848Cde36c0C06cF88776DC41937083',
+          '0x84123de7279Ee0F745631B8769993C6A61e29515',
+        ]
+      );
 
-      await tenLots
-        .connect(owner)
-        .setAccRewardPerLot([
-          '19146046309380222227',
-          '81206084128536710372',
-          '137000462220996996429',
-        ]);
+      console.log('TenLots vaults added');
 
-      //     await tenLots.connect(owner).editCoolDownPeriod(5);
+      await tenLots.addVestingPeriod(0, 60, 250);
+      await tenLots.addVestingPeriod(60, 120, 500);
+      await tenLots.addVestingPeriod(120, 180, 750);
+      await tenLots.addVestingPeriod(180, 240, 1000);
+
+      console.log('TenLots vesting periods added');
+
+      await tenLots.setAccRewardPerLot([
+        ethers.BigNumber.from('19146046309380222227'),
+        ethers.BigNumber.from('81206084128536710372'),
+        ethers.BigNumber.from('137000462220996996429'),
+      ]);
+
+      // console.log('accRewards set', await tenLots.accRewardPerLot[0]);
+
+      await tenLots.editCoolDownPeriod(0);
     });
 
     it('should deploy', async () => {
@@ -184,13 +184,13 @@ describe('TenLots', () => {
       console.log('entered users into staking');
       console.log('validating balance...');
       for (let i = 0; i < addresses.length; i++) {
-        // console.log('index : ', i);
-        // expect(
-        //   (await tenLots.enterStakingStats(addresses[i])).balance.toString()
-        // ).to.equal(
-        //   (await contract.methods.enterStakingStats(addresses[i]).call())
-        //     .balance
-        // );
+        console.log('index : ', i);
+        expect(
+          (await tenLots.enterStakingStats(addresses[i])).balance.toString()
+        ).to.equal(
+          (await contract.methods.enterStakingStats(addresses[i]).call())
+            .balance
+        );
         if (
           (await tenLots.enterStakingStats(addresses[i])).balance.toString() !=
           (await contract.methods.enterStakingStats(addresses[i]).call())
@@ -205,11 +205,28 @@ describe('TenLots', () => {
     it('validate user rewards', async () => {
       for (let i = 0; i < addresses.length; i++) {
         const res = await tenLots.userRewardPerLot(addresses[i]);
+        console.log('validated user reward : ', i);
         expect(res.toString()).to.equal(
           await contract.methods.userRewardPerLot(addresses[i]).call()
         );
-        console.log('RES..', res);
+
+        console.log(
+          'CONTRACT..',
+          await contract.methods.userRewardPerLot(addresses[i]).call()
+        );
       }
+
+      await tenLots
+        .connect(owner)
+        .enterUserIntoStaking([addresses[33]], [data2[33]]);
+
+      // const res = await tenLots.userRewardPerLot(addresses[33]);
+      // console.log('res : ', res);
+
+      // console.log(
+      //   'CONTRACT..',
+      //   await contract.methods.userRewardPerLot(addresses[33]).call()
+      // );
     });
 
     it('should return true for users entered', async () => {

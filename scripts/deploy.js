@@ -5,6 +5,7 @@ const main = async () => {
   await hre.run('compile');
 
   const singleStakingVault = 14;
+  const unitShare = 100;
   const coolDownPeriod = 43200;
   const precisionMultiplier = ethers.BigNumber.from('10').pow(40);
   const tenfi = '0xd15C444F1199Ae72795eba15E8C1db44E47abF62';
@@ -17,6 +18,7 @@ const main = async () => {
     TenLots,
     [
       singleStakingVault,
+      unitShare,
       coolDownPeriod,
       precisionMultiplier,
       tenfi,
