@@ -480,6 +480,14 @@ contract TenLots is
     }
 
     /**
+     * @notice Function to change the tenFinance address.
+     */
+    function editTenFinance(address _tenFinance) external onlyOwner {
+        require(_tenFinance != address(0), "TenLots : zero address");
+        tenFinance = _tenFinance;
+    }
+
+    /**
      * @notice Function to retrieve the Tenfi balance of the @param _user
      */
 
