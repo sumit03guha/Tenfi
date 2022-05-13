@@ -11,6 +11,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "./IcTToken.sol";
 import "./ITenFarm.sol";
 import "./IPancakePair.sol";
+import "hardhat/console.sol";
 
 contract TenLots is
     Initializable,
@@ -494,6 +495,20 @@ contract TenLots is
     }
 
     /**
+     * @notice Function to pause certain functions in the contract.
+     */
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /**
+     * @notice Function to unpause certain functions in the contract.
+     */
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    /**
      * @notice Function to retrieve the Tenfi balance of the @param _user
      */
 
@@ -532,9 +547,9 @@ contract TenLots is
                 ,
                 uint256 exchangeRateMantissa
             ) = IcTToken(cTToken).getAccountSnapshot(_user);
-            _balance += cTokenBalance.mul(exchangeRateMantissa).mul(
-                precisionMultiplier
-            );
+            _balance += (cTokenBalance.mul(exchangeRateMantissa).div(1e18)).mul(
+                    precisionMultiplier
+                );
         }
 
         return _balance.div(precisionMultiplier);
