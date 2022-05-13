@@ -1,7 +1,7 @@
 const { ethers, upgrades } = require('hardhat');
 const deployed = require('../build/deploy.json');
 
-const PROXY_ADDRESS = '0xCf87825B8a215Cb78e7515819cBC279a7Bbc052b';
+const PROXY_ADDRESS = '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0';
 
 const main = async () => {
   const TenLotsV2 = await ethers.getContractFactory('TenLots');

@@ -49,18 +49,18 @@ describe('TenLots', () => {
       });
   });
 
-  describe('Sanity checks', async () => {
-    before(async () => {
-      TenLots = await hre.ethers.getContractFactory('TenLots');
-      tenLots = await TenLots.connect(owner).deploy();
-      await tenLots.deployed();
-    });
+  // describe('Sanity checks', async () => {
+  //   before(async () => {
+  //     TenLots = await hre.ethers.getContractFactory('TenLots');
+  //     tenLots = await TenLots.connect(owner).deploy();
+  //     await tenLots.deployed();
+  //   });
 
-    it('should deploy', async () => {
-      console.log('TenLots deployed : ', tenLots.address);
-      expect(tenLots.address).to.not.be.undefined;
-    });
-  });
+  //   it('should deploy', async () => {
+  //     console.log('TenLots deployed : ', tenLots.address);
+  //     expect(tenLots.address).to.not.be.undefined;
+  //   });
+  // });
 
   describe('Deploy proxy and end to end testing', async () => {
     beforeEach(async () => {
@@ -100,9 +100,16 @@ describe('TenLots', () => {
       console.log('TenLots deployed');
 
       await busdt.transfer(
-        tenLots.address,
-        ethers.BigNumber.from('100000000000000000000000000')
+        owner.address,
+        ethers.BigNumber.from('50000000000000000000')
       );
+
+      await busdt
+        .connect(owner)
+        .approve(
+          tenLots.address,
+          ethers.BigNumber.from('50000000000000000000')
+        );
 
       await tenLots.addLevel(
         ethers.BigNumber.from('5000000000000000000'),
@@ -133,10 +140,10 @@ describe('TenLots', () => {
         ]
       );
 
-      await tenLots.addVestingPeriod(0, 60, 250);
-      await tenLots.addVestingPeriod(60, 120, 500);
-      await tenLots.addVestingPeriod(120, 180, 750);
-      await tenLots.addVestingPeriod(180, 240, 1000);
+      await tenLots.connect(owner).addVestingPeriod(0, 7776000, 250);
+      await tenLots.connect(owner).addVestingPeriod(7776000, 15552000, 500);
+      await tenLots.connect(owner).addVestingPeriod(15552000, 31104000, 750);
+      await tenLots.connect(owner).addVestingPeriod(31104000, 62208000, 1000);
 
       await tenLots.setAccRewardPerLot([
         ethers.BigNumber.from('19146046309380222227'),
@@ -145,6 +152,8 @@ describe('TenLots', () => {
       ]);
 
       await tenLots.editCoolDownPeriod(0);
+
+      await tenLots.changeSupplier(owner.address);
 
       console.log('Values set');
     });
@@ -563,7 +572,83 @@ describe('TenLots', () => {
 
       await tenLots.connect(newUser).enterStaking();
       const response = await tenLots.enterStakingStats(newUser.address);
-      console.log('response: ', response);
+      console.log('enterStakingStats: ', response);
+    });
+
+    it('should enter staking', async () => {
+      const len = data2.length;
+      let start = 0;
+      console.log('entering users into staking...');
+      for (let index = 1; index <= Math.ceil(len / 100); index++) {
+        if (index <= Math.floor(len / 100)) {
+          await tenLots
+            .connect(owner)
+            .enterUserIntoStaking(
+              addresses.slice(start, start + 100),
+              data2.slice(start, start + 100)
+            );
+          start += 100;
+        } else {
+          await tenLots
+            .connect(owner)
+            .enterUserIntoStaking(
+              addresses.slice(start, len + 1),
+              data2.slice(start, len + 1)
+            );
+        }
+      }
+      console.log('entered users into staking');
+
+      let newUser;
+      await network.provider.request({
+        method: 'hardhat_impersonateAccount',
+        params: ['0xaDC83042Db3a395E8e580A785eB0310B9aF9a6a3'],
+      });
+      newUser = await ethers.getSigner(
+        '0xaDC83042Db3a395E8e580A785eB0310B9aF9a6a3'
+      );
+
+      await user1.sendTransaction({
+        to: newUser.address,
+        value: ethers.utils.parseEther('100.0'),
+      });
+      await tenLots.connect(owner).setTToken(TToken);
+
+      await tenLots.connect(newUser).enterStaking();
+      await tenLots
+        .connect(owner)
+        .updateAccPerShare(ethers.BigNumber.from('50000000000000000000'));
+      await tenLots
+        .connect(owner)
+        .editUserClaimTimeStamp(newUser.address, false, 0);
+
+      await network.provider.send('evm_increaseTime', [15552000]);
+      await network.provider.send('evm_mine');
+
+      const response = await tenLots.getBalance(newUser.address);
+      console.log('getBalance: ', response);
+
+      const obj = await tenLots.enterStakingStats(newUser.address);
+      console.log('enterStakingStats : ', obj);
+
+      const busdBal = await busdt.balanceOf(newUser.address);
+      const userReward = await tenLots.userRewardPerLot(newUser.address);
+      console.log(`userReward : ${ethers.utils.formatEther(userReward)}`);
+      console.log(
+        `BUSD balance before : ${ethers.utils.formatEther(busdBal)} BUSD`
+      );
+
+      await tenLots.connect(newUser).claim({
+        value: ethers.utils.parseUnits(obj.pendingFee.toString(), 'wei'),
+      });
+
+      const busdBal2 = await busdt.balanceOf(newUser.address);
+      console.log(
+        `BUSD balance after : ${ethers.utils.formatEther(busdBal2)} BUSD`
+      );
+
+      const res = await tenLots.userEntered(newUser.address);
+      expect(res).to.be.false;
     });
   });
 

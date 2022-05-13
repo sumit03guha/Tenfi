@@ -171,6 +171,8 @@ contract TenLots is
             enterStakingStats[msg.sender].timestamp
         );
 
+        console.log("vestedPeriod : ", vestedPeriod);
+
         for (uint8 i = 0; i < vestingPeriods.length; ++i) {
             if (
                 (vestedPeriod >= vestingPeriods[i].minVestingPeriod &&
