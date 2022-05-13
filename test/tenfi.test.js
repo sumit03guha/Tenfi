@@ -564,25 +564,28 @@ describe('TenLots', () => {
         newUser
       );
 
-      const tenfiContract = new ethers.Contract(tenfi, abi3, newUser);
-      const amountToMint = ethers.utils.parseEther('30');
+      // const tenfiContract = new ethers.Contract(tenfi, abi3, newUser);
+      // const amountToMint = ethers.utils.parseEther('30');
 
-      await tenfiContract
-        .connect(newUser)
-        .approve(tToken.address, amountToMint);
+      // await tenfiContract
+      //   .connect(newUser)
+      //   .approve(tToken.address, amountToMint);
 
-      const allowance = await tenfiContract.allowance(
-        newUser.address,
-        tToken.address
-      );
-      console.log('allowance: ', allowance);
+      // const allowance = await tenfiContract.allowance(
+      //   newUser.address,
+      //   tToken.address
+      // );
+      // console.log('allowance: ', allowance);
 
-      expect(allowance).to.equal(amountToMint);
+      // expect(allowance).to.equal(amountToMint);
 
-      await tToken.connect(newUser).mint(amountToMint);
+      // await tToken.connect(newUser).mint(amountToMint);
 
-      const balance = await tToken.balanceOf(newUser.address);
-      console.log('BAL : ', balance);
+      // const balance = await tToken.balanceOf(newUser.address);
+      // console.log('BAL : ', balance);
+
+      const bal = await tenLots.getBalance(newUser.address);
+      console.log('BAL : ', bal);
 
       await tenLots.connect(newUser).enterStaking();
       const response = await tenLots.enterStakingStats(newUser.address);

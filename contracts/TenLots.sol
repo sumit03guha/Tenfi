@@ -132,7 +132,7 @@ contract TenLots is
                 levels[i].userCount <= levels[i].maxAllowedUser,
                 "Error: maxAllowedUser limit reached"
             );
-            uint256 balance_ = _balance.div(precisionMultiplier);
+            uint256 balance_ = _balance;
             if (
                 balance_ >= levels[i].minBalance &&
                 balance_ < levels[i].maxBalance
@@ -497,7 +497,7 @@ contract TenLots is
      * @notice Function to retrieve the Tenfi balance of the @param _user
      */
 
-    function getBalance(address _user) public returns (uint256) {
+    function getBalance(address _user) public view returns (uint256) {
         uint256 _balance = 0;
         for (uint8 i = 0; i < pID.length; ++i) {
             uint256 stakedWantTokens = TenFarm(tenFarm)
@@ -526,12 +526,18 @@ contract TenLots is
             .mul(precisionMultiplier);
 
         if (cTTokenSet) {
-            _balance += IcTToken(cTToken).balanceOfUnderlying(_user).mul(
+            (
+                ,
+                uint256 cTokenBalance,
+                ,
+                uint256 exchangeRateMantissa
+            ) = IcTToken(cTToken).getAccountSnapshot(_user);
+            _balance += cTokenBalance.mul(exchangeRateMantissa).mul(
                 precisionMultiplier
             );
         }
 
-        return _balance;
+        return _balance.div(precisionMultiplier);
     }
 
     /**
