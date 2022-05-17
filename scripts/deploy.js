@@ -12,6 +12,7 @@ const main = async () => {
   const BUSD = '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56';
   const tenFarm = '0x264A1b3F6db28De4D3dD4eD23Ab31A468B0C1A96';
   const tenFinance = '0x393c7C3EbCBFf2c1138D123df5827e215458F0c4';
+  const supplier = '0xA3647eB96fcaFA8DE3e361F45c94921DAeF79a92';
 
   const TenLots = await hre.ethers.getContractFactory('TenLots');
   const tenLots = await upgrades.deployProxy(
@@ -73,8 +74,6 @@ const main = async () => {
     200
   );
 
-  console.log('TenLots levels added');
-
   await tenLots.addVault(
     [61, 95],
     [
@@ -83,14 +82,22 @@ const main = async () => {
     ]
   );
 
-  console.log('TenLots vaults added');
+  await tenLots.addVestingPeriod(0, 7776000, 250);
+  await tenLots.addVestingPeriod(7776000, 15552000, 500);
+  await tenLots.addVestingPeriod(15552000, 31104000, 750);
+  await tenLots.addVestingPeriod(31104000, 62208000, 1000);
 
-  await tenLots.addVestingPeriod(0, 60, 250);
-  await tenLots.addVestingPeriod(60, 120, 500);
-  await tenLots.addVestingPeriod(120, 180, 750);
-  await tenLots.addVestingPeriod(180, 240, 1000);
+  await tenLots.setAccRewardPerLot([
+    ethers.BigNumber.from('19146046309380222227'),
+    ethers.BigNumber.from('81206084128536710372'),
+    ethers.BigNumber.from('137000462220996996429'),
+  ]);
 
-  console.log('TenLots vesting periods added');
+  await tenLots.editCoolDownPeriod(0);
+
+  await tenLots.changeSupplier(supplier);
+
+  console.log('Initial values added');
 };
 
 main()

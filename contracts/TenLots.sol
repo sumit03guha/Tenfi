@@ -77,6 +77,7 @@ contract TenLots is
 
     event StakingEntered(address indexed user, uint256 indexed timestamp);
     event RewardClaim(address indexed user, uint256 indexed reward);
+    event BUSDWithdrawn(uint256 amount);
 
     modifier onlySupplier() {
         require(_supplier == _msgSender(), "TenLots : caller != supplier");
@@ -373,11 +374,10 @@ contract TenLots is
      * @dev This function will automatically be trigerred, from the backend, whenever
      * the user withdraws from the farm.
      */
-    function editUserClaimTimeStamp(
-        address user,
-        bool penalty,
-        uint256 amount
-    ) external onlyOwner {
+    function editUserClaimTimeStamp(address user, bool penalty)
+        external
+        onlyOwner
+    {
         require(userEntered[user], "TenLots: staking !entered");
         require(
             block.timestamp.sub(enterStakingStats[user].claimTimeStamp) >=
@@ -389,7 +389,7 @@ contract TenLots is
             enterStakingStats[user].pendingFee += 716338000000000;
             userAllowed[user] = true;
         } else {
-            totalPenalties += amount;
+            totalPenalties += userRewardPerLot(user);
             userEntered[user] = false;
             levels[enterStakingStats[user].level].userCount--;
             totalStaked -= enterStakingStats[user].balance;
@@ -431,10 +431,20 @@ contract TenLots is
         }
     }
 
-    function transferPenalty() external onlyOwner {
+    function transferPenalty() external nonReentrant onlyOwner {
         uint256 fundsTransferred = totalPenalties;
         totalPenalties = 0;
         IERC20Upgradeable(BUSD).safeTransfer(tenFinance, fundsTransferred);
+    }
+
+    function withdrawBUSD(uint256 _amount) external nonReentrant onlyOwner {
+        require(
+            _amount <= IERC20Upgradeable(BUSD).balanceOf(address(this)),
+            "TenLots : _amount > BUSD balance"
+        );
+        IERC20Upgradeable(BUSD).safeTransfer(tenFinance, _amount);
+
+        emit BUSDWithdrawn(_amount);
     }
 
     /**
